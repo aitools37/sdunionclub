@@ -36,7 +36,7 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside OR when location changes
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (showDropdown && !(event.target as Element).closest('.dropdown-container')) {
@@ -47,6 +47,11 @@ const Header: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showDropdown]);
+
+  // Close dropdown when location changes (successful navigation)
+  useEffect(() => {
+    setShowDropdown(false);
+  }, [location.pathname]);
 
   const quickAccessButtons = [
     { name: 'Entradas', path: '/entradas', icon: Ticket },
@@ -107,12 +112,7 @@ const Header: React.FC = () => {
     setShowDropdown(!showDropdown);
   };
 
-  const closeDropdown = () => {
-    setShowDropdown(false);
-  };
-
-  const handleAnchorLink = (anchor: string) => {
-    closeDropdown();
+  const handleAnchorScroll = (anchor: string) => {
     // Small delay to ensure navigation happens first
     setTimeout(() => {
       const element = document.getElementById(anchor);
@@ -210,7 +210,6 @@ const Header: React.FC = () => {
                       <Link
                         key={button.name}
                         to={button.path}
-                        onClick={closeDropdown}
                         className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors w-full text-left"
                       >
                         <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
@@ -248,9 +247,9 @@ const Header: React.FC = () => {
                               <Link
                                 to={path}
                                 onClick={() => {
-                                  closeDropdown();
+                                  // Don't close dropdown immediately - let navigation happen first
                                   if (anchor) {
-                                    handleAnchorLink(anchor);
+                                    handleAnchorScroll(anchor);
                                   }
                                 }}
                                 className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group w-full text-left"
