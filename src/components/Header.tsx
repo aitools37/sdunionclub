@@ -58,6 +58,7 @@ const Header: React.FC = () => {
   ];
 
   const handleNavigation = (path: string, anchor?: string) => {
+    // Close dropdown first
     setShowDropdown(false);
     
     if (anchor) {
@@ -71,6 +72,7 @@ const Header: React.FC = () => {
         }
       }, 100);
     } else {
+      // Simple navigation
       navigate(path);
     }
   };
@@ -211,17 +213,16 @@ const Header: React.FC = () => {
                   {quickAccessButtons.map((button) => {
                     const Icon = button.icon;
                     return (
-                      <Link
+                      <button
                         key={button.name}
-                        to={button.path}
-                        onClick={() => setShowDropdown(false)}
-                        className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        onClick={() => handleNavigation(button.path)}
+                        className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors w-full text-left"
                       >
                         <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
                           <Icon className="w-5 h-5 text-primary-600" />
                         </div>
                         <span className="font-medium text-secondary-900">{button.name}</span>
-                      </Link>
+                      </button>
                     );
                   })}
                 </div>
@@ -243,42 +244,22 @@ const Header: React.FC = () => {
                           const ItemIcon = item.icon;
                           return (
                             <li key={item.name}>
-                              {item.anchor ? (
-                                <button
-                                  onClick={() => handleNavigation(item.path, item.anchor)}
-                                  className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group w-full text-left"
-                                >
-                                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-primary-100 transition-colors">
-                                    <ItemIcon className="w-4 h-4 text-secondary-500 group-hover:text-primary-600" />
+                              <button
+                                onClick={() => handleNavigation(item.path, item.anchor)}
+                                className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group w-full text-left"
+                              >
+                                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-primary-100 transition-colors">
+                                  <ItemIcon className="w-4 h-4 text-secondary-500 group-hover:text-primary-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <div className="font-semibold text-secondary-900 group-hover:text-primary-600 transition-colors">
+                                    {item.name}
                                   </div>
-                                  <div className="flex-1">
-                                    <div className="font-semibold text-secondary-900 group-hover:text-primary-600 transition-colors">
-                                      {item.name}
-                                    </div>
-                                    <div className="text-sm text-secondary-600 mt-1">
-                                      {item.description}
-                                    </div>
+                                  <div className="text-sm text-secondary-600 mt-1">
+                                    {item.description}
                                   </div>
-                                </button>
-                              ) : (
-                                <Link
-                                  to={item.path}
-                                  onClick={() => setShowDropdown(false)}
-                                  className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-                                >
-                                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-primary-100 transition-colors">
-                                    <ItemIcon className="w-4 h-4 text-secondary-500 group-hover:text-primary-600" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="font-semibold text-secondary-900 group-hover:text-primary-600 transition-colors">
-                                      {item.name}
-                                    </div>
-                                    <div className="text-sm text-secondary-600 mt-1">
-                                      {item.description}
-                                    </div>
-                                  </div>
-                                </Link>
-                              )}
+                                </div>
+                              </button>
                             </li>
                           );
                         })}
