@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Menu, X, Ticket, Users, Calendar, Home, Trophy, Building2, History, Award, Star, MapPin, Clock, ShoppingBag } from 'lucide-react';
 import { useCartStore } from '../stores/cartStore';
 
@@ -10,6 +10,7 @@ const Header: React.FC = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { getTotalItems } = useCartStore();
 
   useEffect(() => {
@@ -56,6 +57,24 @@ const Header: React.FC = () => {
     { name: 'Estadio', path: '/estadio', icon: Home },
   ];
 
+  const handleNavigation = (path: string, anchor?: string) => {
+    setShowDropdown(false);
+    
+    if (anchor) {
+      // Navigate to the page first
+      navigate(path);
+      // Then scroll to the anchor after a brief delay
+      setTimeout(() => {
+        const element = document.getElementById(anchor);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } else {
+      navigate(path);
+    }
+  };
+
   const menuSections = [
     {
       title: 'Equipos',
@@ -74,8 +93,8 @@ const Header: React.FC = () => {
       color: 'bg-secondary-50 text-secondary-600',
       items: [
         { name: 'Historia', path: '/club', description: 'Desde 1922', icon: History },
-        { name: 'Directiva', path: '/club#directiva', description: 'Órganos de gobierno', icon: Users },
-        { name: 'Logros', path: '/club#logros', description: 'Trayectoria del club', icon: Award },
+        { name: 'Directiva', path: '/club', anchor: 'directiva', description: 'Órganos de gobierno', icon: Users },
+        { name: 'Logros', path: '/club', anchor: 'logros', description: 'Trayectoria del club', icon: Award },
         { name: 'Patrocinadores', path: '/patrocinadores', description: 'Nuestros colaboradores', icon: Building2 },
       ],
     },
@@ -85,7 +104,7 @@ const Header: React.FC = () => {
       color: 'bg-accent-50 text-accent-600',
       items: [
         { name: 'La Planchada', path: '/estadio', description: 'Nuestro hogar desde 1922', icon: Home },
-        { name: 'Cómo Llegar', path: '/estadio#como-llegar', description: 'Ubicación y transporte', icon: MapPin },
+        { name: 'Cómo Llegar', path: '/estadio', anchor: 'como-llegar', description: 'Ubicación y transporte', icon: MapPin },
         { name: 'Calendario', path: '/calendario', description: 'Próximos partidos', icon: Calendar },
       ],
     },
@@ -224,23 +243,42 @@ const Header: React.FC = () => {
                           const ItemIcon = item.icon;
                           return (
                             <li key={item.name}>
-                              <Link
-                                to={item.path}
-                                onClick={() => setShowDropdown(false)}
-                                className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-                              >
-                                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-primary-100 transition-colors">
-                                  <ItemIcon className="w-4 h-4 text-secondary-500 group-hover:text-primary-600" />
-                                </div>
-                                <div className="flex-1">
-                                  <div className="font-semibold text-secondary-900 group-hover:text-primary-600 transition-colors">
-                                    {item.name}
+                              {item.anchor ? (
+                                <button
+                                  onClick={() => handleNavigation(item.path, item.anchor)}
+                                  className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group w-full text-left"
+                                >
+                                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-primary-100 transition-colors">
+                                    <ItemIcon className="w-4 h-4 text-secondary-500 group-hover:text-primary-600" />
                                   </div>
-                                  <div className="text-sm text-secondary-600 mt-1">
-                                    {item.description}
+                                  <div className="flex-1">
+                                    <div className="font-semibold text-secondary-900 group-hover:text-primary-600 transition-colors">
+                                      {item.name}
+                                    </div>
+                                    <div className="text-sm text-secondary-600 mt-1">
+                                      {item.description}
+                                    </div>
                                   </div>
-                                </div>
-                              </Link>
+                                </button>
+                              ) : (
+                                <Link
+                                  to={item.path}
+                                  onClick={() => setShowDropdown(false)}
+                                  className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                                >
+                                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-primary-100 transition-colors">
+                                    <ItemIcon className="w-4 h-4 text-secondary-500 group-hover:text-primary-600" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="font-semibold text-secondary-900 group-hover:text-primary-600 transition-colors">
+                                      {item.name}
+                                    </div>
+                                    <div className="text-sm text-secondary-600 mt-1">
+                                      {item.description}
+                                    </div>
+                                  </div>
+                                </Link>
+                              )}
                             </li>
                           );
                         })}
