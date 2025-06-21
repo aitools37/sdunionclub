@@ -57,23 +57,22 @@ const Header: React.FC = () => {
     { name: 'Estadio', path: '/estadio', icon: Home },
   ];
 
-  const handleNavigation = (path: string, anchor?: string) => {
-    // Close dropdown first
+  const handleCloseDropdown = () => {
     setShowDropdown(false);
+  };
+
+  const handleNavigationWithAnchor = (path: string, anchor?: string) => {
+    setShowDropdown(false);
+    navigate(path);
     
     if (anchor) {
-      // Navigate to the page first
-      navigate(path);
-      // Then scroll to the anchor after a brief delay
+      // Small delay to ensure page loads before scrolling
       setTimeout(() => {
         const element = document.getElementById(anchor);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth' });
         }
       }, 100);
-    } else {
-      // Simple navigation
-      navigate(path);
     }
   };
 
@@ -216,7 +215,7 @@ const Header: React.FC = () => {
                       <Link
                         key={button.name}
                         to={button.path}
-                        onClick={() => setShowDropdown(false)}
+                        onClick={handleCloseDropdown}
                         className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors w-full text-left"
                       >
                         <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
@@ -243,30 +242,52 @@ const Header: React.FC = () => {
                       <ul className="space-y-3">
                         {section.items.map((item) => {
                           const ItemIcon = item.icon;
-                          return (
-                            <li key={item.name}>
-                              <Link
-                                to={item.path}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleNavigation(item.path, item.anchor);
-                                }}
-                                className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group w-full text-left"
-                              >
-                                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-primary-100 transition-colors">
-                                  <ItemIcon className="w-4 h-4 text-secondary-500 group-hover:text-primary-600" />
-                                </div>
-                                <div className="flex-1">
-                                  <div className="font-semibold text-secondary-900 group-hover:text-primary-600 transition-colors">
-                                    {item.name}
+                          if (item.anchor) {
+                            // Items with anchors need special handling
+                            return (
+                              <li key={item.name}>
+                                <button
+                                  onClick={() => handleNavigationWithAnchor(item.path, item.anchor)}
+                                  className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group w-full text-left"
+                                >
+                                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-primary-100 transition-colors">
+                                    <ItemIcon className="w-4 h-4 text-secondary-500 group-hover:text-primary-600" />
                                   </div>
-                                  <div className="text-sm text-secondary-600 mt-1">
-                                    {item.description}
+                                  <div className="flex-1">
+                                    <div className="font-semibold text-secondary-900 group-hover:text-primary-600 transition-colors">
+                                      {item.name}
+                                    </div>
+                                    <div className="text-sm text-secondary-600 mt-1">
+                                      {item.description}
+                                    </div>
                                   </div>
-                                </div>
-                              </Link>
-                            </li>
-                          );
+                                </button>
+                              </li>
+                            );
+                          } else {
+                            // Regular navigation items
+                            return (
+                              <li key={item.name}>
+                                <Link
+                                  to={item.path}
+                                  onClick={handleCloseDropdown}
+                                  className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group w-full text-left"
+                                >
+                                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-primary-100 transition-colors">
+                                    <ItemIcon className="w-4 h-4 text-secondary-500 group-hover:text-primary-600" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="font-semibold text-secondary-900 group-hover:text-primary-600 transition-colors">
+                                      {item.name}
+                                    </div>
+                                    <div className="text-sm text-secondary-600 mt-1">
+                                      {item.description}
+                                    </div>
+                                  </div>
+                                </Link>
+                              </li>
+                            );
+                          }
                         })}
                       </ul>
                     </div>
