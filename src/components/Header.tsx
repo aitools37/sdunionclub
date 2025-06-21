@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Menu, X, Ticket, Users, Calendar, Home, Trophy, ChevronDown } from 'lucide-react';
+import { ShoppingCart, Menu, X, Ticket, Users, Calendar, Home, Trophy, Building2, History, Award, Star, MapPin, Clock } from 'lucide-react';
 import { useCartStore } from '../stores/cartStore';
-import MegaMenu from './MegaMenu';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [showMegaMenu, setShowMegaMenu] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const location = useLocation();
   const { getTotalItems } = useCartStore();
@@ -28,7 +26,6 @@ const Header: React.FC = () => {
       } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
         // Scrolling down and not near top
         setIsVisible(false);
-        setShowMegaMenu(false); // Close mega menu when hiding
         setShowDropdown(false); // Close dropdown when hiding
       }
       
@@ -59,30 +56,49 @@ const Header: React.FC = () => {
     { name: 'Estadio', path: '/estadio', icon: Home },
   ];
 
-  const navigationItems = [
+  const menuSections = [
     {
-      name: 'Club',
-      path: '/club',
+      title: 'Equipos',
       icon: Trophy,
-      hasSubmenu: true,
-      submenu: [
-        { name: 'Historia', path: '/club', description: 'Desde 1922' },
-        { name: 'Directiva', path: '/club#directiva', description: 'Órganos de gobierno' },
-        { name: 'Logros', path: '/club#logros', description: 'Trayectoria del club' },
-      ]
+      color: 'bg-primary-50 text-primary-600',
+      items: [
+        { name: 'Primer Equipo', path: '/equipos/primer-equipo', description: 'Plantilla y cuerpo técnico', icon: Star },
+        { name: 'Marismas', path: '/equipos/marismas', description: 'Equipo filial', icon: Users },
+        { name: 'Escuelas', path: '/equipos/escuelas', description: 'Fútbol base y canteras', icon: Award },
+        { name: 'Ver Todos', path: '/equipos', description: 'Todos los equipos', icon: Trophy },
+      ],
     },
     {
-      name: 'Equipos',
-      path: '/equipos',
-      hasSubmenu: true,
-      submenu: [
-        { name: 'Primer Equipo', path: '/equipos/primer-equipo', description: 'Plantilla y cuerpo técnico' },
-        { name: 'Marismas', path: '/equipos/marismas', description: 'Equipo filial' },
-        { name: 'Escuelas', path: '/equipos/escuelas', description: 'Fútbol base y canteras' },
-      ]
+      title: 'Club',
+      icon: Building2,
+      color: 'bg-secondary-50 text-secondary-600',
+      items: [
+        { name: 'Historia', path: '/club', description: 'Desde 1922', icon: History },
+        { name: 'Directiva', path: '/club#directiva', description: 'Órganos de gobierno', icon: Users },
+        { name: 'Logros', path: '/club#logros', description: 'Trayectoria del club', icon: Award },
+        { name: 'Patrocinadores', path: '/patrocinadores', description: 'Nuestros colaboradores', icon: Building2 },
+      ],
     },
-    { name: 'Calendario', path: '/calendario' },
-    { name: 'Estadio', path: '/estadio' },
+    {
+      title: 'Estadio',
+      icon: Home,
+      color: 'bg-accent-50 text-accent-600',
+      items: [
+        { name: 'La Planchada', path: '/estadio', description: 'Nuestro hogar desde 1922', icon: Home },
+        { name: 'Cómo Llegar', path: '/estadio#como-llegar', description: 'Ubicación y transporte', icon: MapPin },
+        { name: 'Calendario', path: '/calendario', description: 'Próximos partidos', icon: Calendar },
+      ],
+    },
+    {
+      title: 'Servicios',
+      icon: ShoppingBag,
+      color: 'bg-success-50 text-success-600',
+      items: [
+        { name: 'Entradas', path: '/entradas', description: 'Compra tus entradas', icon: Ticket },
+        { name: 'Tienda', path: '/tienda', description: 'Productos oficiales', icon: ShoppingBag },
+        { name: 'Hazte Socio', path: '/hazte-socio', description: 'Únete al club', icon: Users },
+      ],
+    },
   ];
 
   const cartItemCount = getTotalItems();
@@ -132,32 +148,6 @@ const Header: React.FC = () => {
                 </div>
               </Link>
 
-              {/* Desktop Navigation - Hidden on smaller screens */}
-              <div className="hidden lg:flex items-center space-x-8">
-                {navigationItems.map((item) => (
-                  <div key={item.name} className="relative">
-                    {item.hasSubmenu ? (
-                      <button
-                        className="flex items-center space-x-1 text-secondary-700 hover:text-primary-600 font-medium transition-colors"
-                        onMouseEnter={() => setShowMegaMenu(true)}
-                        onMouseLeave={() => setShowMegaMenu(false)}
-                      >
-                        {item.icon && <item.icon className="w-4 h-4" />}
-                        <span>{item.name}</span>
-                        <ChevronDown className="w-4 h-4" />
-                      </button>
-                    ) : (
-                      <Link 
-                        to={item.path} 
-                        className="text-secondary-700 hover:text-primary-600 font-medium transition-colors"
-                      >
-                        {item.name}
-                      </Link>
-                    )}
-                  </div>
-                ))}
-              </div>
-
               {/* Right Side - Cart and Dropdown Menu */}
               <div className="flex items-center space-x-4">
                 {/* Cart */}
@@ -177,94 +167,110 @@ const Header: React.FC = () => {
                 <div className="relative dropdown-container">
                   <button
                     onClick={toggleDropdown}
-                    className="p-2 text-secondary-700 hover:text-primary-600 transition-colors flex items-center space-x-1"
+                    className="p-2 text-secondary-700 hover:text-primary-600 transition-colors flex items-center space-x-2"
                   >
-                    <Menu className="w-6 h-6" />
+                    {showDropdown ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                     <span className="hidden sm:block text-sm font-medium">Menú</span>
                   </button>
-
-                  {/* Dropdown Menu */}
-                  {showDropdown && (
-                    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
-                      {/* Mobile Quick Access (visible on small screens) */}
-                      <div className="md:hidden px-4 py-2 border-b border-gray-200">
-                        <h3 className="text-sm font-semibold text-secondary-900 mb-3">Acceso Rápido</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {quickAccessButtons.map((button) => {
-                            const Icon = button.icon;
-                            return (
-                              <Link
-                                key={button.name}
-                                to={button.path}
-                                onClick={() => setShowDropdown(false)}
-                                className="flex items-center space-x-2 px-3 py-2 text-secondary-700 hover:bg-gray-50 rounded-md transition-colors"
-                              >
-                                <Icon className="w-4 h-4" />
-                                <span className="text-sm">{button.name}</span>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Navigation Items */}
-                      <div className="px-4 py-2">
-                        <h3 className="text-sm font-semibold text-secondary-900 mb-3">Navegación</h3>
-                        {navigationItems.map((item) => (
-                          <div key={item.name} className="mb-2">
-                            <Link
-                              to={item.path}
-                              onClick={() => setShowDropdown(false)}
-                              className="flex items-center space-x-2 px-3 py-2 text-secondary-700 hover:bg-gray-50 rounded-md transition-colors font-medium"
-                            >
-                              {item.icon && <item.icon className="w-4 h-4" />}
-                              <span>{item.name}</span>
-                            </Link>
-                            {item.submenu && (
-                              <div className="ml-6 mt-1 space-y-1">
-                                {item.submenu.map((subItem) => (
-                                  <Link
-                                    key={subItem.name}
-                                    to={subItem.path}
-                                    onClick={() => setShowDropdown(false)}
-                                    className="block px-3 py-2 text-sm text-secondary-600 hover:bg-gray-50 rounded-md transition-colors"
-                                  >
-                                    <div className="font-medium">{subItem.name}</div>
-                                    <div className="text-xs text-secondary-500">{subItem.description}</div>
-                                  </Link>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Additional Links */}
-                      <div className="border-t border-gray-200 px-4 py-2">
-                        <Link
-                          to="/patrocinadores"
-                          onClick={() => setShowDropdown(false)}
-                          className="block px-3 py-2 text-sm text-secondary-600 hover:bg-gray-50 rounded-md transition-colors"
-                        >
-                          Patrocinadores
-                        </Link>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
           </div>
         </nav>
-      </header>
 
-      {/* Mega Menu */}
-      {showMegaMenu && isVisible && (
-        <MegaMenu
-          onMouseEnter={() => setShowMegaMenu(true)}
-          onMouseLeave={() => setShowMegaMenu(false)}
-        />
-      )}
+        {/* Full Width Dropdown Menu */}
+        {showDropdown && (
+          <div className="absolute top-full left-0 right-0 bg-white shadow-xl border-t border-gray-100 z-40">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              {/* Mobile Quick Access (visible on small screens) */}
+              <div className="md:hidden mb-8">
+                <h3 className="text-lg font-semibold text-secondary-900 mb-4 flex items-center">
+                  <Clock className="w-5 h-5 mr-2 text-primary-600" />
+                  Acceso Rápido
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {quickAccessButtons.map((button) => {
+                    const Icon = button.icon;
+                    return (
+                      <Link
+                        key={button.name}
+                        to={button.path}
+                        onClick={() => setShowDropdown(false)}
+                        className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                          <Icon className="w-5 h-5 text-primary-600" />
+                        </div>
+                        <span className="font-medium text-secondary-900">{button.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Main Menu Sections */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {menuSections.map((section) => {
+                  const SectionIcon = section.icon;
+                  return (
+                    <div key={section.title} className="space-y-4">
+                      <div className={`flex items-center space-x-3 p-3 rounded-lg ${section.color}`}>
+                        <SectionIcon className="w-6 h-6" />
+                        <h3 className="font-bold text-lg">{section.title}</h3>
+                      </div>
+                      
+                      <ul className="space-y-3">
+                        {section.items.map((item) => {
+                          const ItemIcon = item.icon;
+                          return (
+                            <li key={item.name}>
+                              <Link
+                                to={item.path}
+                                onClick={() => setShowDropdown(false)}
+                                className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                              >
+                                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-primary-100 transition-colors">
+                                  <ItemIcon className="w-4 h-4 text-secondary-500 group-hover:text-primary-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <div className="font-semibold text-secondary-900 group-hover:text-primary-600 transition-colors">
+                                    {item.name}
+                                  </div>
+                                  <div className="text-sm text-secondary-600 mt-1">
+                                    {item.description}
+                                  </div>
+                                </div>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Footer with Contact Info */}
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                  <div className="flex items-center justify-center space-x-2 text-secondary-600">
+                    <MapPin className="w-4 h-4" />
+                    <span className="text-sm">Campos de Sport La Planchada</span>
+                  </div>
+                  <div className="flex items-center justify-center space-x-2 text-secondary-600">
+                    <Clock className="w-4 h-4" />
+                    <span className="text-sm">Fundado en 1922</span>
+                  </div>
+                  <div className="flex items-center justify-center space-x-2 text-secondary-600">
+                    <Users className="w-4 h-4" />
+                    <span className="text-sm">Más de 1,250 socios</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </header>
 
       {/* Spacer for fixed header */}
       <div className="h-24"></div>
