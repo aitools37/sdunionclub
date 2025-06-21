@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Menu, X, Ticket, Users, Calendar, Home, Trophy } from 'lucide-react';
+import { ShoppingCart, Menu, X, Ticket, Users, Calendar, Home, Trophy, ChevronDown } from 'lucide-react';
 import { useCartStore } from '../stores/cartStore';
 import MegaMenu from './MegaMenu';
 
@@ -10,6 +10,7 @@ const Header: React.FC = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showMegaMenu, setShowMegaMenu] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const location = useLocation();
   const { getTotalItems } = useCartStore();
 
@@ -28,6 +29,7 @@ const Header: React.FC = () => {
         // Scrolling down and not near top
         setIsVisible(false);
         setShowMegaMenu(false); // Close mega menu when hiding
+        setShowDropdown(false); // Close dropdown when hiding
       }
       
       setLastScrollY(currentScrollY);
@@ -37,6 +39,18 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showDropdown && !(event.target as Element).closest('.dropdown-container')) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDropdown]);
+
   const quickAccessButtons = [
     { name: 'Entradas', path: '/entradas', icon: Ticket },
     { name: 'Tienda', path: '/tienda', icon: ShoppingCart },
@@ -45,7 +59,37 @@ const Header: React.FC = () => {
     { name: 'Estadio', path: '/estadio', icon: Home },
   ];
 
+  const navigationItems = [
+    {
+      name: 'Club',
+      path: '/club',
+      icon: Trophy,
+      hasSubmenu: true,
+      submenu: [
+        { name: 'Historia', path: '/club', description: 'Desde 1922' },
+        { name: 'Directiva', path: '/club#directiva', description: 'Órganos de gobierno' },
+        { name: 'Logros', path: '/club#logros', description: 'Trayectoria del club' },
+      ]
+    },
+    {
+      name: 'Equipos',
+      path: '/equipos',
+      hasSubmenu: true,
+      submenu: [
+        { name: 'Primer Equipo', path: '/equipos/primer-equipo', description: 'Plantilla y cuerpo técnico' },
+        { name: 'Marismas', path: '/equipos/marismas', description: 'Equipo filial' },
+        { name: 'Escuelas', path: '/equipos/escuelas', description: 'Fútbol base y canteras' },
+      ]
+    },
+    { name: 'Calendario', path: '/calendario' },
+    { name: 'Estadio', path: '/estadio' },
+  ];
+
   const cartItemCount = getTotalItems();
+
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown);
+  };
 
   return (
     <>
@@ -88,40 +132,35 @@ const Header: React.FC = () => {
                 </div>
               </Link>
 
-              {/* Desktop Navigation */}
+              {/* Desktop Navigation - Hidden on smaller screens */}
               <div className="hidden lg:flex items-center space-x-8">
-                <div className="relative">
-                  <button
-                    className="flex items-center space-x-1 text-secondary-700 hover:text-primary-600 font-medium transition-colors"
-                    onMouseEnter={() => setShowMegaMenu(true)}
-                    onMouseLeave={() => setShowMegaMenu(false)}
-                  >
-                    <Trophy className="w-4 h-4" />
-                    <span>Club</span>
-                  </button>
-                </div>
-                <Link 
-                  to="/equipos" 
-                  className="text-secondary-700 hover:text-primary-600 font-medium transition-colors"
-                >
-                  Equipos
-                </Link>
-                <Link 
-                  to="/calendario" 
-                  className="text-secondary-700 hover:text-primary-600 font-medium transition-colors"
-                >
-                  Calendario
-                </Link>
-                <Link 
-                  to="/estadio" 
-                  className="text-secondary-700 hover:text-primary-600 font-medium transition-colors"
-                >
-                  Estadio
-                </Link>
+                {navigationItems.map((item) => (
+                  <div key={item.name} className="relative">
+                    {item.hasSubmenu ? (
+                      <button
+                        className="flex items-center space-x-1 text-secondary-700 hover:text-primary-600 font-medium transition-colors"
+                        onMouseEnter={() => setShowMegaMenu(true)}
+                        onMouseLeave={() => setShowMegaMenu(false)}
+                      >
+                        {item.icon && <item.icon className="w-4 h-4" />}
+                        <span>{item.name}</span>
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <Link 
+                        to={item.path} 
+                        className="text-secondary-700 hover:text-primary-600 font-medium transition-colors"
+                      >
+                        {item.name}
+                      </Link>
+                    )}
+                  </div>
+                ))}
               </div>
 
-              {/* Cart and Mobile Menu */}
+              {/* Right Side - Cart and Dropdown Menu */}
               <div className="flex items-center space-x-4">
+                {/* Cart */}
                 <Link
                   to="/carrito"
                   className="relative p-2 text-secondary-700 hover:text-primary-600 transition-colors"
@@ -134,54 +173,89 @@ const Header: React.FC = () => {
                   )}
                 </Link>
 
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="lg:hidden p-2 text-secondary-700 hover:text-primary-600 transition-colors"
-                >
-                  {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                </button>
+                {/* Dropdown Menu Button */}
+                <div className="relative dropdown-container">
+                  <button
+                    onClick={toggleDropdown}
+                    className="p-2 text-secondary-700 hover:text-primary-600 transition-colors flex items-center space-x-1"
+                  >
+                    <Menu className="w-6 h-6" />
+                    <span className="hidden sm:block text-sm font-medium">Menú</span>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {showDropdown && (
+                    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+                      {/* Mobile Quick Access (visible on small screens) */}
+                      <div className="md:hidden px-4 py-2 border-b border-gray-200">
+                        <h3 className="text-sm font-semibold text-secondary-900 mb-3">Acceso Rápido</h3>
+                        <div className="grid grid-cols-2 gap-2">
+                          {quickAccessButtons.map((button) => {
+                            const Icon = button.icon;
+                            return (
+                              <Link
+                                key={button.name}
+                                to={button.path}
+                                onClick={() => setShowDropdown(false)}
+                                className="flex items-center space-x-2 px-3 py-2 text-secondary-700 hover:bg-gray-50 rounded-md transition-colors"
+                              >
+                                <Icon className="w-4 h-4" />
+                                <span className="text-sm">{button.name}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Navigation Items */}
+                      <div className="px-4 py-2">
+                        <h3 className="text-sm font-semibold text-secondary-900 mb-3">Navegación</h3>
+                        {navigationItems.map((item) => (
+                          <div key={item.name} className="mb-2">
+                            <Link
+                              to={item.path}
+                              onClick={() => setShowDropdown(false)}
+                              className="flex items-center space-x-2 px-3 py-2 text-secondary-700 hover:bg-gray-50 rounded-md transition-colors font-medium"
+                            >
+                              {item.icon && <item.icon className="w-4 h-4" />}
+                              <span>{item.name}</span>
+                            </Link>
+                            {item.submenu && (
+                              <div className="ml-6 mt-1 space-y-1">
+                                {item.submenu.map((subItem) => (
+                                  <Link
+                                    key={subItem.name}
+                                    to={subItem.path}
+                                    onClick={() => setShowDropdown(false)}
+                                    className="block px-3 py-2 text-sm text-secondary-600 hover:bg-gray-50 rounded-md transition-colors"
+                                  >
+                                    <div className="font-medium">{subItem.name}</div>
+                                    <div className="text-xs text-secondary-500">{subItem.description}</div>
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Additional Links */}
+                      <div className="border-t border-gray-200 px-4 py-2">
+                        <Link
+                          to="/patrocinadores"
+                          onClick={() => setShowDropdown(false)}
+                          className="block px-3 py-2 text-sm text-secondary-600 hover:bg-gray-50 rounded-md transition-colors"
+                        >
+                          Patrocinadores
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </nav>
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="lg:hidden bg-white border-t border-gray-100 shadow-lg">
-            <div className="px-4 py-4 space-y-4">
-              {quickAccessButtons.map((button) => {
-                const Icon = button.icon;
-                return (
-                  <Link
-                    key={button.name}
-                    to={button.path}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center space-x-3 py-2 text-secondary-700 hover:text-primary-600 transition-colors"
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{button.name}</span>
-                  </Link>
-                );
-              })}
-              <div className="border-t pt-4">
-                <Link
-                  to="/equipos"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="block py-2 text-secondary-700 hover:text-primary-600 font-medium transition-colors"
-                >
-                  Equipos
-                </Link>
-                <Link
-                  to="/club"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="block py-2 text-secondary-700 hover:text-primary-600 font-medium transition-colors"
-                >
-                  Historia del Club
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
       </header>
 
       {/* Mega Menu */}
