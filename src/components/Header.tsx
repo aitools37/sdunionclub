@@ -48,6 +48,11 @@ const Header: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showDropdown]);
 
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   const quickAccessButtons = [
     { name: 'Entradas', path: '/entradas', icon: Ticket },
     { name: 'Tienda', path: '/tienda', icon: ShoppingCart },
@@ -107,6 +112,11 @@ const Header: React.FC = () => {
     setShowDropdown(!showDropdown);
   };
 
+  const handleMenuLinkClick = () => {
+    // Close the dropdown menu when any link is clicked
+    setShowDropdown(false);
+  };
+
   const handleAnchorScroll = (anchor: string) => {
     // Small delay to ensure navigation happens first
     setTimeout(() => {
@@ -132,6 +142,7 @@ const Header: React.FC = () => {
                   <Link
                     key={button.name}
                     to={button.path}
+                    onClick={handleMenuLinkClick}
                     className="flex items-center space-x-2 px-4 py-1 rounded-full hover:bg-primary-700 transition-colors"
                   >
                     <Icon className="w-4 h-4" />
@@ -148,7 +159,7 @@ const Header: React.FC = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               {/* Logo */}
-              <Link to="/" className="flex items-center space-x-3">
+              <Link to="/" onClick={handleMenuLinkClick} className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
                   UCA
                 </div>
@@ -163,6 +174,7 @@ const Header: React.FC = () => {
                 {/* Cart */}
                 <Link
                   to="/carrito"
+                  onClick={handleMenuLinkClick}
                   className="relative p-2 text-secondary-700 hover:text-primary-600 transition-colors"
                 >
                   <ShoppingCart className="w-6 h-6" />
@@ -205,6 +217,7 @@ const Header: React.FC = () => {
                       <Link
                         key={button.name}
                         to={button.path}
+                        onClick={handleMenuLinkClick}
                         className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors w-full text-left"
                       >
                         <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
@@ -242,11 +255,11 @@ const Header: React.FC = () => {
                               <Link
                                 to={path}
                                 onClick={() => {
-                                  // Handle anchor scrolling without closing the menu
+                                  handleMenuLinkClick(); // Close menu first
+                                  // Handle anchor scrolling
                                   if (anchor) {
                                     handleAnchorScroll(anchor);
                                   }
-                                  // Menu will only close when clicking outside
                                 }}
                                 className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group w-full text-left"
                               >
