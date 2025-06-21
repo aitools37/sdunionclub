@@ -213,16 +213,17 @@ const Header: React.FC = () => {
                   {quickAccessButtons.map((button) => {
                     const Icon = button.icon;
                     return (
-                      <button
+                      <Link
                         key={button.name}
-                        onClick={() => handleNavigation(button.path)}
+                        to={button.path}
+                        onClick={() => setShowDropdown(false)}
                         className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors w-full text-left"
                       >
                         <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
                           <Icon className="w-5 h-5 text-primary-600" />
                         </div>
                         <span className="font-medium text-secondary-900">{button.name}</span>
-                      </button>
+                      </Link>
                     );
                   })}
                 </div>
@@ -244,8 +245,12 @@ const Header: React.FC = () => {
                           const ItemIcon = item.icon;
                           return (
                             <li key={item.name}>
-                              <button
-                                onClick={() => handleNavigation(item.path, item.anchor)}
+                              <Link
+                                to={item.path}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleNavigation(item.path, item.anchor);
+                                }}
                                 className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group w-full text-left"
                               >
                                 <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-primary-100 transition-colors">
@@ -259,7 +264,7 @@ const Header: React.FC = () => {
                                     {item.description}
                                   </div>
                                 </div>
-                              </button>
+                              </Link>
                             </li>
                           );
                         })}
