@@ -36,7 +36,7 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // Close dropdown when clicking outside OR when location changes
+  // Close dropdown ONLY when clicking outside the dropdown container
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (showDropdown && !(event.target as Element).closest('.dropdown-container')) {
@@ -47,11 +47,6 @@ const Header: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showDropdown]);
-
-  // Close dropdown when location changes (successful navigation)
-  useEffect(() => {
-    setShowDropdown(false);
-  }, [location.pathname]);
 
   const quickAccessButtons = [
     { name: 'Entradas', path: '/entradas', icon: Ticket },
@@ -195,7 +190,7 @@ const Header: React.FC = () => {
 
         {/* Full Width Dropdown Menu */}
         {showDropdown && (
-          <div className="absolute top-full left-0 right-0 bg-white shadow-xl border-t border-gray-100 z-40">
+          <div className="absolute top-full left-0 right-0 bg-white shadow-xl border-t border-gray-100 z-40 dropdown-container">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               {/* Mobile Quick Access (visible on small screens) */}
               <div className="md:hidden mb-8">
@@ -247,10 +242,11 @@ const Header: React.FC = () => {
                               <Link
                                 to={path}
                                 onClick={() => {
-                                  // Don't close dropdown immediately - let navigation happen first
+                                  // Handle anchor scrolling without closing the menu
                                   if (anchor) {
                                     handleAnchorScroll(anchor);
                                   }
+                                  // Menu will only close when clicking outside
                                 }}
                                 className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group w-full text-left"
                               >
