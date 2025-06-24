@@ -120,8 +120,15 @@ const Teams: React.FC = () => {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlText, 'text/html');
         
-        // Find the classification table with more specific selector including parent div
-        const table = doc.querySelector('div.col-sm-12 table.table.table-bordered.table-striped');
+        // Find the visible classification table (summary table)
+        // Using more specific selector targeting the visible summary table
+        const resumeSection = doc.querySelector('span#CL_Resumen[style*="display:"]');
+        
+        if (!resumeSection) {
+          throw new Error('No se encontró la sección de resumen de clasificación');
+        }
+        
+        const table = resumeSection.querySelector('table');
         
         if (!table) {
           throw new Error('No se encontró la tabla de clasificación');
@@ -130,32 +137,49 @@ const Teams: React.FC = () => {
         const rows = table.querySelectorAll('tbody tr');
         const classificationData: ClassificationTeam[] = [];
         
-        rows.forEach((row) => {
+        console.log(`Found ${rows.length} rows in classification table`);
+        
+        rows.forEach((row, index) => {
           const cells = row.querySelectorAll('td');
+          console.log(`Row ${index} has ${cells.length} cells:`, Array.from(cells).map(cell => cell.textContent?.trim()));
           
-          // Based on the provided HTML structure:
+          // Based on the actual HTML structure from CL_Resumen:
           // cells[0]: Color indicator
           // cells[1]: Position number
           // cells[2]: Team name (with link)
           // cells[3]: Points
-          // cells[4]: Played games
-          // cells[5]: Won games
-          // cells[6]: Drawn games  
-          // cells[7]: Lost games
+          // cells[4]: Played games (hidden-xs)
+          // cells[5]: Won games (hidden-xs)
+          // cells[6]: Drawn games (hidden-xs)
+          // cells[7]: Lost games (hidden-xs)
           // cells[8]: Last results
-          // cells[9]: Sanctions
+          // cells[9]: Sanctions (hidden-xs)
           
-          if (cells.length >= 8) {
-            const position = parseInt(cells[1]?.textContent?.trim() || '0');
+          if (cells.length >= 9) {
+            const positionText = cells[1]?.textContent?.trim() || '0';
+            const position = parseInt(positionText);
+            
             const teamElement = cells[2]?.querySelector('a') || cells[2];
             const team = teamElement?.textContent?.trim() || '';
-            const points = parseInt(cells[3]?.textContent?.trim() || '0');
-            const played = parseInt(cells[4]?.textContent?.trim() || '0');
-            const won = parseInt(cells[5]?.textContent?.trim() || '0');
-            const drawn = parseInt(cells[6]?.textContent?.trim() || '0');
-            const lost = parseInt(cells[7]?.textContent?.trim() || '0');
             
-            if (team && position > 0) {
+            const pointsText = cells[3]?.textContent?.trim() || '0';
+            const points = parseInt(pointsText);
+            
+            const playedText = cells[4]?.textContent?.trim() || '0';
+            const played = parseInt(playedText);
+            
+            const wonText = cells[5]?.textContent?.trim() || '0';
+            const won = parseInt(wonText);
+            
+            const drawnText = cells[6]?.textContent?.trim() || '0';
+            const drawn = parseInt(drawnText);
+            
+            const lostText = cells[7]?.textContent?.trim() || '0';
+            const lost = parseInt(lostText);
+            
+            console.log(`Parsing team: ${team}, pos: ${position}, pts: ${points}, played: ${played}`);
+            
+            if (team && position > 0 && !isNaN(points)) {
               const teamData: ClassificationTeam = {
                 position,
                 team,
@@ -168,8 +192,16 @@ const Teams: React.FC = () => {
               
               classificationData.push(teamData);
             }
+          } else {
+            console.log(`Row ${index} skipped - insufficient cells (${cells.length})`);
           }
         });
+        
+        console.log('Final parsed classification data:', classificationData);
+        
+        if (classificationData.length === 0) {
+          throw new Error('No se pudieron extraer datos de la clasificación');
+        }
         
         setClassification(classificationData);
       } catch (error) {
