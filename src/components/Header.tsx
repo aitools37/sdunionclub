@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Menu, X, Ticket, Users, Calendar, Home, Trophy, Building2, History, Award, Star, MapPin, Clock, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, Menu, X, Ticket, Users, Calendar, Home, Trophy, Building2, History, Award, Star, MapPin, Clock, ShoppingBag, TrendingUp } from 'lucide-react';
 import { useCartStore } from '../stores/cartStore';
 
 const Header: React.FC = () => {
@@ -58,6 +58,7 @@ const Header: React.FC = () => {
     { name: 'Tienda', path: '/tienda', icon: ShoppingCart },
     { name: 'Hazte Socio', path: '/hazte-socio', icon: Users },
     { name: 'Calendario', path: '/calendario', icon: Calendar },
+    { name: 'Clasificación', path: '/clasificacion', icon: TrendingUp },
     { name: 'Estadio', path: '/estadio', icon: Home },
   ];
 
@@ -92,6 +93,7 @@ const Header: React.FC = () => {
         { name: 'La Planchada', path: '/estadio', description: 'Nuestro hogar desde 1922', icon: Home },
         { name: 'Cómo Llegar', path: '/estadio#como-llegar', description: 'Ubicación y transporte', icon: MapPin },
         { name: 'Calendario', path: '/calendario', description: 'Próximos partidos', icon: Calendar },
+        { name: 'Clasificación', path: '/clasificacion', description: 'Tabla de posiciones', icon: TrendingUp },
       ],
     },
     {
@@ -135,7 +137,7 @@ const Header: React.FC = () => {
         {/* Quick Access Bar */}
         <div className="bg-primary-600 text-white py-2">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="hidden md:flex justify-center space-x-8">
+            <div className="hidden md:flex justify-center space-x-6">
               {quickAccessButtons.map((button) => {
                 const Icon = button.icon;
                 return (
@@ -143,7 +145,7 @@ const Header: React.FC = () => {
                     key={button.name}
                     to={button.path}
                     onClick={handleMenuLinkClick}
-                    className="flex items-center space-x-2 px-4 py-1 rounded-full hover:bg-primary-700 transition-colors"
+                    className="flex items-center space-x-2 px-3 py-1 rounded-full hover:bg-primary-700 transition-colors"
                   >
                     <Icon className="w-4 h-4" />
                     <span className="text-sm font-medium">{button.name}</span>

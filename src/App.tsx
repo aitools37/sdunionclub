@@ -12,6 +12,7 @@ import TicketCheckout from './pages/TicketCheckout';
 import Membership from './pages/Membership';
 import MembershipCheckout from './pages/MembershipCheckout';
 import Calendar from './pages/Calendar';
+import Classification from './pages/Classification';
 import Stadium from './pages/Stadium';
 import Club from './pages/Club';
 import Teams from './pages/Teams';
@@ -57,6 +58,7 @@ function App() {
             <Route path="/hazte-socio" element={<Membership />} />
             <Route path="/hazte-socio/checkout" element={<MembershipCheckout />} />
             <Route path="/calendario" element={<Calendar />} />
+            <Route path="/clasificacion" element={<Classification />} />
             <Route path="/estadio" element={<Stadium />} />
             <Route path="/club" element={<Club />} />
             <Route path="/equipos" element={<Teams />} />
