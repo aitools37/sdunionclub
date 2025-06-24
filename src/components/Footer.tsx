@@ -17,9 +17,14 @@ const Footer: React.FC = () => {
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 relative">
                 <img
-                  src="https://images.pexels.com/photos/274566/pexels-photo-274566.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop"
+                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Uni%C3%B3n_Club_Astillero.png/240px-Uni%C3%B3n_Club_Astillero.png"
                   alt="S.D. Unión Club de Astillero"
-                  className="w-full h-full object-contain rounded-full border-2 border-primary-600"
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    // Fallback in case the Wikipedia image doesn't load
+                    const target = e.target as HTMLImageElement;
+                    target.src = "https://images.pexels.com/photos/274566/pexels-photo-274566.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop";
+                  }}
                 />
               </div>
               <div>
