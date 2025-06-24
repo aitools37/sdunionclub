@@ -45,7 +45,9 @@ const Classification: React.FC = () => {
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlText, 'text/html');
       
-      // Find the visible classification table (summary table) - updated selector to target visible element
+      let table = null;
+      
+      // First attempt: Find the visible classification table (summary table) - updated selector to target visible element
       let resumeSection = doc.querySelector('span#CL_Resumen[style*="display:"]');
       
       // Fallback: try to find any visible span with CL_Resumen that doesn't have display:none
@@ -65,11 +67,52 @@ const Classification: React.FC = () => {
         resumeSection = doc.querySelector('span#CL_Resumen');
       }
       
-      if (!resumeSection) {
-        throw new Error('No se encontró la sección de resumen de clasificación');
+      if (resumeSection) {
+        table = resumeSection.querySelector('table');
       }
       
-      const table = resumeSection.querySelector('table');
+      // Enhanced fallback: Search for classification table directly based on structure
+      if (!table) {
+        console.log('Resume section not found, searching for classification table directly...');
+        
+        // Find all tables in the document
+        const allTables = doc.querySelectorAll('table');
+        
+        for (const candidateTable of allTables) {
+          // Check if this table has the expected structure for a classification table
+          const thead = candidateTable.querySelector('thead');
+          const tbody = candidateTable.querySelector('tbody');
+          
+          if (thead && tbody) {
+            const headerCells = thead.querySelectorAll('th');
+            const bodyRows = tbody.querySelectorAll('tr');
+            
+            // A classification table should have at least 8 columns and multiple rows
+            if (headerCells.length >= 8 && bodyRows.length > 0) {
+              // Check if first data row has the expected pattern (position, team, points, etc.)
+              const firstRow = bodyRows[0];
+              const firstRowCells = firstRow.querySelectorAll('td');
+              
+              if (firstRowCells.length >= 8) {
+                // Check if second cell contains what looks like a position number
+                const positionText = firstRowCells[1]?.textContent?.trim() || '';
+                // Check if third cell contains what looks like a team name
+                const teamText = firstRowCells[2]?.textContent?.trim() || '';
+                // Check if fourth cell contains what looks like points
+                const pointsText = firstRowCells[3]?.textContent?.trim() || '';
+                
+                if (positionText && !isNaN(parseInt(positionText)) && 
+                    teamText && teamText.length > 2 && 
+                    pointsText && !isNaN(parseInt(pointsText))) {
+                  console.log('Found classification table based on structure analysis');
+                  table = candidateTable;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
       
       if (!table) {
         throw new Error('No se encontró la tabla de clasificación');
