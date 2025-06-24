@@ -45,8 +45,25 @@ const Classification: React.FC = () => {
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlText, 'text/html');
       
-      // Find the visible classification table (summary table)
-      const resumeSection = doc.querySelector('span#CL_Resumen');
+      // Find the visible classification table (summary table) - updated selector to target visible element
+      let resumeSection = doc.querySelector('span#CL_Resumen[style*="display:"]');
+      
+      // Fallback: try to find any visible span with CL_Resumen that doesn't have display:none
+      if (!resumeSection) {
+        const allResumeSections = doc.querySelectorAll('span#CL_Resumen');
+        for (const section of allResumeSections) {
+          const style = section.getAttribute('style') || '';
+          if (!style.includes('display:none') && !style.includes('display: none')) {
+            resumeSection = section;
+            break;
+          }
+        }
+      }
+      
+      // If still not found, try the original selector as last resort
+      if (!resumeSection) {
+        resumeSection = doc.querySelector('span#CL_Resumen');
+      }
       
       if (!resumeSection) {
         throw new Error('No se encontró la sección de resumen de clasificación');
