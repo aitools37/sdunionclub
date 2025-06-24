@@ -120,8 +120,8 @@ const Teams: React.FC = () => {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlText, 'text/html');
         
-        // Find the classification table with updated selector
-        const table = doc.querySelector('table.table.table-bordered.table-striped');
+        // Find the classification table with more specific selector including parent div
+        const table = doc.querySelector('div.col-sm-12 table.table.table-bordered.table-striped');
         
         if (!table) {
           throw new Error('No se encontró la tabla de clasificación');
