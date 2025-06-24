@@ -114,6 +114,7 @@ const Teams: React.FC = () => {
         }
         
         const htmlText = await response.text();
+        console.log('Fetched HTML content:', htmlText);
         
         // Parse HTML using DOMParser
         const parser = new DOMParser();
