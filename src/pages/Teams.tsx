@@ -10,9 +10,6 @@ interface ClassificationTeam {
   won: number;
   drawn: number;
   lost: number;
-  goalsFor: number;
-  goalsAgainst: number;
-  goalDiff: number;
 }
 
 const Teams: React.FC = () => {
@@ -122,8 +119,8 @@ const Teams: React.FC = () => {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlText, 'text/html');
         
-        // Find the classification table
-        const table = doc.querySelector('table.table-bordered.table-striped');
+        // Find the classification table with updated selector
+        const table = doc.querySelector('table.table.table-bordered.table-striped');
         
         if (!table) {
           throw new Error('No se encontró la tabla de clasificación');
@@ -132,24 +129,42 @@ const Teams: React.FC = () => {
         const rows = table.querySelectorAll('tbody tr');
         const classificationData: ClassificationTeam[] = [];
         
-        rows.forEach((row, index) => {
+        rows.forEach((row) => {
           const cells = row.querySelectorAll('td');
           
-          if (cells.length >= 10) {
-            const teamData: ClassificationTeam = {
-              position: index + 1,
-              team: cells[1]?.textContent?.trim() || '',
-              points: parseInt(cells[2]?.textContent?.trim() || '0'),
-              played: parseInt(cells[3]?.textContent?.trim() || '0'),
-              won: parseInt(cells[4]?.textContent?.trim() || '0'),
-              drawn: parseInt(cells[5]?.textContent?.trim() || '0'),
-              lost: parseInt(cells[6]?.textContent?.trim() || '0'),
-              goalsFor: parseInt(cells[7]?.textContent?.trim() || '0'),
-              goalsAgainst: parseInt(cells[8]?.textContent?.trim() || '0'),
-              goalDiff: parseInt(cells[9]?.textContent?.trim() || '0')
-            };
+          // Based on the provided HTML structure:
+          // cells[0]: Color indicator
+          // cells[1]: Position number
+          // cells[2]: Team name (with link)
+          // cells[3]: Points
+          // cells[4]: Played games
+          // cells[5]: Won games
+          // cells[6]: Drawn games  
+          // cells[7]: Lost games
+          // cells[8]: Last results
+          // cells[9]: Sanctions
+          
+          if (cells.length >= 8) {
+            const position = parseInt(cells[1]?.textContent?.trim() || '0');
+            const teamElement = cells[2]?.querySelector('a') || cells[2];
+            const team = teamElement?.textContent?.trim() || '';
+            const points = parseInt(cells[3]?.textContent?.trim() || '0');
+            const played = parseInt(cells[4]?.textContent?.trim() || '0');
+            const won = parseInt(cells[5]?.textContent?.trim() || '0');
+            const drawn = parseInt(cells[6]?.textContent?.trim() || '0');
+            const lost = parseInt(cells[7]?.textContent?.trim() || '0');
             
-            if (teamData.team) {
+            if (team && position > 0) {
+              const teamData: ClassificationTeam = {
+                position,
+                team,
+                points,
+                played,
+                won,
+                drawn,
+                lost
+              };
+              
               classificationData.push(teamData);
             }
           }
@@ -251,9 +266,6 @@ const Teams: React.FC = () => {
                       <th className="px-4 py-3 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider">G</th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider">E</th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider">P</th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider">GF</th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider">GC</th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider">DG</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -307,20 +319,6 @@ const Teams: React.FC = () => {
                           <td className="px-4 py-4 whitespace-nowrap text-center text-sm text-error-600">
                             {team.lost}
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-center text-sm text-secondary-600">
-                            {team.goalsFor}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-center text-sm text-secondary-600">
-                            {team.goalsAgainst}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-center">
-                            <span className={`text-sm font-medium ${
-                              team.goalDiff > 0 ? 'text-success-600' :
-                              team.goalDiff < 0 ? 'text-error-600' : 'text-secondary-600'
-                            }`}>
-                              {team.goalDiff > 0 ? '+' : ''}{team.goalDiff}
-                            </span>
-                          </td>
                         </tr>
                       );
                     })}
@@ -345,7 +343,7 @@ const Teams: React.FC = () => {
                 <span className="text-secondary-600">Posiciones de descenso</span>
               </div>
               <div className="text-secondary-500">
-                PJ: Partidos Jugados | G: Ganados | E: Empatados | P: Perdidos | GF: Goles a Favor | GC: Goles en Contra | DG: Diferencia de Goles
+                PJ: Partidos Jugados | G: Ganados | E: Empatados | P: Perdidos
               </div>
             </div>
           </div>
