@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 relative">
                 <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Uni%C3%B3n_Club_Astillero.png/240px-Uni%C3%B3n_Club_Astillero.png"
+                  src="https://upload.wikimedia.org/wikipedia/en/0/01/Uni%C3%B3n_Club_Astillero.png"
                   alt="S.D. Unión Club de Astillero"
                   className="w-full h-full object-contain"
                   onError={(e) => {
