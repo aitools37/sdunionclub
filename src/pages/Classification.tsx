@@ -46,7 +46,7 @@ const Classification: React.FC = () => {
       const doc = parser.parseFromString(htmlText, 'text/html');
       
       // Find the visible classification table (summary table)
-      const resumeSection = doc.querySelector('span#CL_Resumen[style*="display:"]');
+      const resumeSection = doc.querySelector('span#CL_Resumen');
       
       if (!resumeSection) {
         throw new Error('No se encontró la sección de resumen de clasificación');
