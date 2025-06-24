@@ -15,8 +15,12 @@ const Footer: React.FC = () => {
           {/* Club Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
-                UCA
+              <div className="w-12 h-12 relative">
+                <img
+                  src="https://images.pexels.com/photos/274566/pexels-photo-274566.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop"
+                  alt="S.D. Unión Club de Astillero"
+                  className="w-full h-full object-contain rounded-full border-2 border-primary-600"
+                />
               </div>
               <div>
                 <div className="text-lg font-bold">S.D. Unión Club</div>
