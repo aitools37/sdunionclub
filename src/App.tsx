@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Store from './pages/Store';
+import Merchandising from './pages/Merchandising';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
@@ -50,6 +51,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/tienda" element={<Store />} />
+            <Route path="/tienda/merchandising" element={<Merchandising />} />
             <Route path="/tienda/producto/:id" element={<ProductDetail />} />
             <Route path="/carrito" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
