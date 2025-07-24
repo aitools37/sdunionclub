@@ -20,10 +20,8 @@ const Tickets: React.FC = () => {
       competition: 'Segunda Regional',
       image: 'https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=600&h=300&fit=crop',
       ticketTypes: [
-        { id: 'general', name: 'Entrada General', price: 8, available: 450 },
-        { id: 'tribuna', name: 'Tribuna', price: 12, available: 167 },
-        { id: 'socio', name: 'Socio', price: 5, available: 200 },
-        { id: 'infantil', name: 'Infantil (menores 12 años)', price: 3, available: 100 },
+        { id: 'general', name: 'Entrada General', price: 5, available: 450 },
+        { id: 'tribuna', name: 'Tribuna', price: 5, available: 167 },
       ],
     },
     {
@@ -36,9 +34,8 @@ const Tickets: React.FC = () => {
       competition: 'Segunda Regional',
       image: 'https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=600&h=300&fit=crop',
       ticketTypes: [
-        { id: 'general', name: 'Entrada General', price: 8, available: 300 },
-        { id: 'socio', name: 'Socio', price: 5, available: 100 },
-        { id: 'infantil', name: 'Infantil (menores 12 años)', price: 3, available: 80 },
+        { id: 'general', name: 'Entrada General', price: 5, available: 300 },
+        { id: 'tribuna', name: 'Tribuna', price: 5, available: 100 },
       ],
     },
     {
@@ -51,10 +48,8 @@ const Tickets: React.FC = () => {
       competition: 'Segunda Regional',
       image: 'https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=600&h=300&fit=crop',
       ticketTypes: [
-        { id: 'general', name: 'Entrada General', price: 8, available: 450 },
-        { id: 'tribuna', name: 'Tribuna', price: 12, available: 167 },
-        { id: 'socio', name: 'Socio', price: 5, available: 200 },
-        { id: 'infantil', name: 'Infantil (menores 12 años)', price: 3, available: 100 },
+        { id: 'general', name: 'Entrada General', price: 5, available: 450 },
+        { id: 'tribuna', name: 'Tribuna', price: 5, available: 167 },
       ],
     },
   ];
@@ -273,10 +268,11 @@ const Tickets: React.FC = () => {
             <div>
               <h4 className="font-semibold text-secondary-900 mb-3">Sobre las Entradas</h4>
               <ul className="space-y-2 text-secondary-600">
+                <li>• Todas las entradas cuestan 5€ independientemente de la edad</li>
+                <li>• Los socios del club entran GRATIS a todos los partidos</li>
                 <li>• Las entradas se envían por email tras la compra</li>
                 <li>• Puedes mostrar la entrada en tu móvil o imprimirla</li>
-                <li>• Los socios tienen descuentos especiales</li>
-                <li>• Las entradas infantiles requieren ir acompañados</li>
+                <li>• Beneficios adicionales con el carnet de socio</li>
               </ul>
             </div>
             <div>

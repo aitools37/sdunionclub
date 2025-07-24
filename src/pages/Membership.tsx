@@ -17,7 +17,9 @@ const Membership: React.FC = () => {
       popular: true,
       color: 'border-gray-300',
       benefits: [
-        'Descuentos en entradas (€5 por entrada)',
+        'Entrada GRATUITA a todos los partidos del club',
+        'Entrada GRATUITA a partidos del Rayo Cantabria',
+        'Entrada GRATUITA a partidos del Racing Femenino',
         'Newsletter mensual exclusivo',
         'Acceso a eventos del club',
         'Descuento 10% en tienda online',
@@ -36,7 +38,9 @@ const Membership: React.FC = () => {
       popular: false,
       color: 'border-secondary-400',
       benefits: [
-        'Descuentos en entradas (€3 por entrada)',
+        'Entrada GRATUITA a todos los partidos del club',
+        'Entrada GRATUITA a partidos del Rayo Cantabria',
+        'Entrada GRATUITA a partidos del Racing Femenino',
         'Newsletter mensual exclusivo',
         'Acceso a eventos familiares del club',
         'Descuento 10% en tienda online',
