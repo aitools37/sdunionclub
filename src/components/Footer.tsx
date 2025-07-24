@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, MessageCircle } from 'lucide-react';
 import SponsorCarousel from './SponsorCarousel';
 
 const Footer: React.FC = () => {
@@ -92,6 +92,9 @@ const Footer: React.FC = () => {
               </a>
               <a href="#" className="text-gray-300 hover:text-primary-400 transition-colors">
                 <Youtube className="w-6 h-6" />
+              </a>
+              <a href="https://whatsapp.com/channel/0029VaoVEgZDTkK7B8u15Q0Z" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-primary-400 transition-colors">
+                <MessageCircle className="w-6 h-6" />
               </a>
             </div>
             <div className="space-y-2 text-sm">
