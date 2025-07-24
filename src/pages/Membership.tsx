@@ -10,11 +10,11 @@ const Membership: React.FC = () => {
 
   const membershipPlans = [
     {
-      id: 'basico',
-      name: 'Socio Básico',
-      price: 30,
+      id: 'adulto',
+      name: 'Socio Adulto',
+      price: 20,
       duration: 'año',
-      popular: false,
+      popular: true,
       color: 'border-gray-300',
       benefits: [
         'Descuentos en entradas (€5 por entrada)',
@@ -22,46 +22,31 @@ const Membership: React.FC = () => {
         'Acceso a eventos del club',
         'Descuento 10% en tienda online',
         'Prioridad en renovaciones',
-        'Carnet de socio oficial'
-      ],
-      description: 'Ideal para aficionados que quieren apoyar al club'
-    },
-    {
-      id: 'premium',
-      name: 'Socio Premium',
-      price: 60,
-      duration: 'año',
-      popular: true,
-      color: 'border-primary-600',
-      benefits: [
-        'Todos los beneficios del Socio Básico',
-        'Camiseta oficial de regalo',
-        'Descuento 15% en tienda online',
-        'Acceso prioritario a entradas',
-        'Invitación a entrenamientos abiertos',
-        'Encuentros con jugadores',
+        'Carnet de socio oficial',
         'Parking gratuito en La Planchada',
-        'Revista oficial trimestral'
+        'Invitación a entrenamientos abiertos'
       ],
-      description: 'Para los verdaderos seguidores del club'
+      description: 'Para mayores de 14 años'
     },
     {
-      id: 'familiar',
-      name: 'Socio Familiar',
-      price: 80,
+      id: 'infantil',
+      name: 'Socio Infantil',
+      price: 5,
       duration: 'año',
       popular: false,
       color: 'border-secondary-400',
       benefits: [
-        'Válido para toda la familia (hasta 4 miembros)',
-        'Todos los beneficios Premium',
-        'Descuentos especiales en eventos familiares',
+        'Descuentos en entradas (€3 por entrada)',
+        'Newsletter mensual exclusivo',
+        'Acceso a eventos familiares del club',
+        'Descuento 10% en tienda online',
+        'Carnet de socio oficial',
+        'Acceso prioritario a entradas',
         'Acceso a actividades para niños',
-        'Kit de bienvenida familiar',
-        'Entradas gratuitas para amistosos',
+        'Descuentos especiales en eventos familiares',
         'Campamentos de verano con descuento'
       ],
-      description: 'Perfecto para familias unionistas'
+      description: 'Para menores de 14 años'
     }
   ];
 
@@ -115,7 +100,7 @@ const Membership: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {membershipPlans.map((plan) => (
             <div
               key={plan.id}
