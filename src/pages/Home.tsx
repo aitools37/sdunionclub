@@ -2,8 +2,28 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Users, Trophy, MapPin, ArrowRight, Star, Heart, Target } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { fetchInstagramPosts, convertInstagramPostsToNews } from '../services/instagramService';
 
 const Home: React.FC = () => {
+  const [instagramNews, setInstagramNews] = React.useState<any[]>([]);
+  const [loadingInstagram, setLoadingInstagram] = React.useState(true);
+
+  React.useEffect(() => {
+    const loadInstagramPosts = async () => {
+      try {
+        const posts = await fetchInstagramPosts(6);
+        const newsData = convertInstagramPostsToNews(posts);
+        setInstagramNews(newsData);
+      } catch (error) {
+        console.error('Error loading Instagram posts:', error);
+      } finally {
+        setLoadingInstagram(false);
+      }
+    };
+
+    loadInstagramPosts();
+  }, []);
+
   const stats = [
     { label: 'Años de Historia', value: '102', icon: Trophy },
     { label: 'Socios Activos', value: '1,250', icon: Users },
@@ -38,13 +58,18 @@ const Home: React.FC = () => {
     },
   ];
 
-  const news = [
+  // Use Instagram news or fallback to static news
+  const news = instagramNews.length > 0 ? instagramNews : [
     {
       id: 1,
       title: 'Victoria contundente ante el CD Laredo por 3-0',
       summary: 'Gran actuación del primer equipo en La Planchada con goles de Martín, González y Pérez.',
       date: '2024-03-08',
       image: 'https://images.pexels.com/photos/274506/pexels-photo-274506.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop',
+      author: 'Redacción Club',
+      views: 145,
+      comments: 8,
+      category: 'partidos',
     },
     {
       id: 2,
@@ -52,6 +77,10 @@ const Home: React.FC = () => {
       summary: 'El club renueva su compromiso con la formación de jóvenes talentos de El Astillero.',
       date: '2024-03-05',
       image: 'https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop',
+      author: 'Junta Directiva',
+      views: 67,
+      comments: 12,
+      category: 'club',
     },
     {
       id: 3,
@@ -59,6 +88,10 @@ const Home: React.FC = () => {
       summary: 'Presentamos el diseño especial que celebra los 102 años de historia del club.',
       date: '2024-03-01',
       image: 'https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop',
+      author: 'Marketing Club',
+      views: 203,
+      comments: 15,
+      category: 'club',
     },
   ];
 
@@ -115,7 +148,7 @@ const Home: React.FC = () => {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, index) => {
               const Icon = stat.icon;
-              return (
+              {news.slice(3, 6).map((article, index) => (
                 <motion.div
                   key={stat.label}
                   initial={{ opacity: 0, y: 20 }}
@@ -140,6 +173,17 @@ const Home: React.FC = () => {
       </section>
 
       {/* Upcoming Matches */}
+                    {article.instagramUrl ? (
+                      <a
+                        href={article.instagramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-pink-600 hover:text-pink-700 font-semibold inline-flex items-center"
+                      >
+                        Ver en Instagram
+                        <ArrowRight className="ml-2 w-4 h-4" />
+                      </a>
+                    ) : (
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -172,8 +216,30 @@ const Home: React.FC = () => {
                       <Calendar className="w-4 h-4" />
                       <span>{new Date(match.date).toLocaleDateString('es-ES', {
                         weekday: 'long',
+                {!loadingInstagram && instagramNews.length > 0 && (
+                  <div className="flex items-center text-sm text-secondary-500">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    Desde Instagram
+                  </div>
+                )}
                         year: 'numeric',
                         month: 'long',
+              {loadingInstagram ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-white rounded-lg shadow-sm p-4 animate-pulse">
+                      <div className="flex space-x-4">
+                        <div className="w-20 h-20 bg-gray-200 rounded-lg"></div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                          <div className="h-3 bg-gray-200 rounded w-full"></div>
+                          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
                         day: 'numeric'
                       })}</span>
                     </div>
@@ -259,6 +325,7 @@ const Home: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
+                          {article.author && ` • ${article.author}`}
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
               ¿Listo para formar parte de la familia?
             </h2>
@@ -266,11 +333,28 @@ const Home: React.FC = () => {
               Únete a más de 1,250 socios que apoyan al S.D. Unión Club de Astillero 
               en cada partido y en cada momento
             </p>
+                        {(article.views || article.comments) && (
+                          <div className="flex items-center space-x-4 mt-2 text-xs text-secondary-500">
+                            {article.views && <span>👁 {article.views}</span>}
+                            {article.comments && <span>💬 {article.comments}</span>}
+                          </div>
+                        )}
+                        {article.instagramUrl && (
+                          <a
+                            href={article.instagramUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-xs text-pink-600 hover:text-pink-700 mt-2"
+                          >
+                            Ver en Instagram →
+                          </a>
+                        )}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/hazte-socio"
                 className="bg-white hover:bg-gray-100 text-primary-600 px-8 py-4 rounded-lg font-semibold transition-colors inline-flex items-center justify-center"
               >
+              )}
                 Hazte Socio
                 <Users className="ml-2 w-5 h-5" />
               </Link>
@@ -278,6 +362,7 @@ const Home: React.FC = () => {
                 to="/tienda"
                 className="bg-transparent border-2 border-white hover:bg-white hover:text-primary-600 text-white px-8 py-4 rounded-lg font-semibold transition-colors inline-flex items-center justify-center"
               >
+                    )}
                 Visita la Tienda
                 <Target className="ml-2 w-5 h-5" />
               </Link>
