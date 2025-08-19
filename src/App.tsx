@@ -22,6 +22,7 @@ import Marismas from './pages/Marismas';
 import Youth from './pages/Youth';
 import Sponsors from './pages/Sponsors';
 import OrderConfirmation from './pages/OrderConfirmation';
+import News from './pages/News';
 
 function App() {
   return (
@@ -69,6 +70,7 @@ function App() {
             <Route path="/equipos/escuelas" element={<Youth />} />
             <Route path="/patrocinadores" element={<Sponsors />} />
             <Route path="/confirmacion/:type/:id" element={<OrderConfirmation />} />
+            <Route path="/noticias" element={<News />} />
           </Routes>
         </Layout>
       </div>

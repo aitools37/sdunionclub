@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Menu, X, Ticket, Users, Calendar, Home, Trophy, Building2, History, Award, Star, MapPin, Clock, ShoppingBag, TrendingUp } from 'lucide-react';
+import { ShoppingCart, Menu, X, Ticket, Users, Calendar, Home, Trophy, Building2, History, Award, Star, MapPin, Clock, ShoppingBag, TrendingUp, Newspaper } from 'lucide-react';
 import { useCartStore } from '../stores/cartStore';
 
 const Header: React.FC = () => {
@@ -56,10 +56,10 @@ const Header: React.FC = () => {
   const quickAccessButtons = [
     { name: 'Entradas', path: '/entradas', icon: Ticket },
     { name: 'Tienda', path: '/tienda', icon: ShoppingCart },
+    { name: 'Noticias', path: '/noticias', icon: Newspaper },
     { name: 'Hazte Socio', path: '/hazte-socio', icon: Users },
     { name: 'Calendario', path: '/calendario', icon: Calendar },
-    { name: 'Clasificación', path: '/clasificacion', icon: TrendingUp },
-    { name: 'Estadio', path: '/estadio', icon: Home },
+    { name: 'Clasificación', path: '/clasificacion', icon: TrendingUp }
   ];
 
   const menuSections = [
@@ -103,6 +103,7 @@ const Header: React.FC = () => {
       items: [
         { name: 'Entradas', path: '/entradas', description: 'Compra tus entradas', icon: Ticket },
         { name: 'Tienda', path: '/tienda', description: 'Productos oficiales', icon: ShoppingBag },
+        { name: 'Noticias', path: '/noticias', description: 'Actualidad del club', icon: Newspaper },
         { name: 'Hazte Socio', path: '/hazte-socio', description: 'Únete al club', icon: Users },
       ],
     },
