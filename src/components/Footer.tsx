@@ -93,9 +93,13 @@ const Footer: React.FC = () => {
               <a href="#" className="text-gray-300 hover:text-primary-400 transition-colors">
                 <Youtube className="w-6 h-6" />
               </a>
-              <a href="https://whatsapp.com/channel/0029VaoVEgZDTkK7B8u15Q0Z" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-primary-400 transition-colors">
+              <button 
+                onClick={() => alert('Canal de WhatsApp en desarrollo. Próximamente disponible para recibir todas las noticias y actualizaciones del club.')} 
+                className="text-gray-300 hover:text-primary-400 transition-colors"
+                title="Canal WhatsApp - Próximamente"
+              >
                 <MessageCircle className="w-6 h-6" />
-              </a>
+              </button>
             </div>
             <div className="space-y-2 text-sm">
               <div className="text-gray-300">Síguenos para estar al día</div>
