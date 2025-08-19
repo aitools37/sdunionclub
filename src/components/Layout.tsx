@@ -14,13 +14,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <Header />
       
       {/* Development Notice Banner */}
-      <div className="bg-warning-500 text-white py-3 px-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-center space-x-3">
-          <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-center text-sm font-medium">
+      <div className="bg-warning-500 text-white py-6 px-6 border-b-4 border-warning-600">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-center space-y-3 md:space-y-0 md:space-x-6">
+          <AlertTriangle className="w-12 h-12 flex-shrink-0 animate-pulse" />
+          <div className="text-center">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">🚧 PÁGINA WEB EN DESARROLLO 🚧</h2>
+            <p className="text-lg md:text-xl font-medium">
             <strong>Aviso:</strong> Esta página web se encuentra en desarrollo y aún no está operativa. 
             Los servicios de compra, registro y reservas no están disponibles por el momento.
-          </p>
+            </p>
+          </div>
         </div>
       </div>
       
