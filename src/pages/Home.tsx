@@ -219,6 +219,7 @@ const Home: React.FC = () => {
                     Comprar Entradas
                   </Link>
                 </div>
+              </motion.div>
             ))}
           </div>
 
@@ -265,6 +266,7 @@ const Home: React.FC = () => {
                 <div className="p-6">
                   <div className="text-sm text-secondary-500 mb-2">
                     {new Date(article.date).toLocaleDateString('es-ES')}
+                    {article.author && ` • ${article.author}`}
                   </div>
                   <h3 className="text-xl font-bold text-secondary-900 mb-3 line-clamp-2">
                     {article.title}
@@ -303,7 +305,6 @@ const Home: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-                          {article.author && ` • ${article.author}`}
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
               ¿Listo para formar parte de la familia?
             </h2>
@@ -326,6 +327,7 @@ const Home: React.FC = () => {
                 Visita la Tienda
                 <Target className="ml-2 w-5 h-5" />
               </Link>
+            </div>
           </motion.div>
         </div>
       </section>
