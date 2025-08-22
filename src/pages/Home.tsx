@@ -296,7 +296,7 @@ const Home: React.FC = () => {
                           <ArrowRight className="ml-2 w-4 h-4" />
                         </a>
                       </div>
-                    )}</parameter>
+                    )}
                   </div>
                 </motion.article>
               ))}
