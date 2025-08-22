@@ -172,70 +172,8 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Upcoming Matches */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-secondary-900 mb-4">
-              Próximos Partidos
-            </h2>
-            <p className="text-xl text-secondary-600">
-              No te pierdas ningún encuentro en La Planchada
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {upcomingMatches.map((match, index) => (
-              <motion.div
-                key={match.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow"
-              >
-                <div className="text-center">
-                  <div className="text-sm text-primary-600 font-semibold mb-2">
-                    {match.competition}
-                  </div>
-                  <div className="text-2xl font-bold text-secondary-900 mb-4">
-                    UCA vs {match.opponent}
-                  </div>
-                  <div className="space-y-2 text-secondary-600 mb-6">
-                    <div className="flex items-center justify-center space-x-2">
-                      <Calendar className="w-4 h-4" />
-                      <span>{new Date(match.date).toLocaleDateString('es-ES', {
-                        weekday: 'long',
-                         year: 'numeric',
-                         month: 'long',
-                         day: 'numeric'
-                       })}</span>
-                    </div>
-                  </div>
-                  <Link
-                    to="/entradas"
-                    className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors inline-block"
-                  >
-                    Comprar Entradas
-                  </Link>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="text-center mt-8">
-            <Link
-              to="/calendario"
-              className="inline-flex items-center text-primary-600 hover:text-primary-700 font-semibold"
-            >
-              Ver calendario completo
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* Latest News */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-secondary-900 mb-4">
@@ -322,6 +260,78 @@ const Home: React.FC = () => {
               ))}
             </div>
           )}
+
+          <div className="text-center mt-8">
+            <Link
+              to="/noticias"
+              className="inline-flex items-center text-primary-600 hover:text-primary-700 font-semibold"
+            >
+              Ver todas las noticias
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Upcoming Matches */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-secondary-900 mb-4">
+              Próximos Partidos
+            </h2>
+            <p className="text-xl text-secondary-600">
+              No te pierdas ningún encuentro en La Planchada
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {upcomingMatches.map((match, index) => (
+              <motion.div
+                key={match.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow"
+              >
+                <div className="text-center">
+                  <div className="text-sm text-primary-600 font-semibold mb-2">
+                    {match.competition}
+                  </div>
+                  <div className="text-2xl font-bold text-secondary-900 mb-4">
+                    UCA vs {match.opponent}
+                  </div>
+                  <div className="space-y-2 text-secondary-600 mb-6">
+                    <div className="flex items-center justify-center space-x-2">
+                      <Calendar className="w-4 h-4" />
+                      <span>{new Date(match.date).toLocaleDateString('es-ES', {
+                        weekday: 'long',
+                         year: 'numeric',
+                         month: 'long',
+                         day: 'numeric'
+                       })}</span>
+                    </div>
+                  </div>
+                  <Link
+                    to="/entradas"
+                    className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors inline-block"
+                  >
+                    Comprar Entradas
+                  </Link>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="text-center mt-8">
+            <Link
+              to="/calendario"
+              className="inline-flex items-center text-primary-600 hover:text-primary-700 font-semibold"
+            >
+              Ver calendario completo
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Link>
+          </div>
         </div>
       </section>
 
