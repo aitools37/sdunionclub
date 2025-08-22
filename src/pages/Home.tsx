@@ -209,6 +209,7 @@ const Home: React.FC = () => {
                          month: 'long',
                          day: 'numeric'
                        })}</span>
+                    </div>
                   </div>
                   <Link
                     to="/entradas"
