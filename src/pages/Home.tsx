@@ -98,7 +98,7 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center bg-gradient-to-r from-primary-900 via-primary-600 to-secondary-900">
+      <section className="relative h-[70vh] flex items-center justify-center bg-gradient-to-r from-primary-900 via-primary-600 to-secondary-900">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30"
           style={{
@@ -143,7 +143,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-white">
+      <section className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, index) => {
@@ -172,20 +172,40 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Latest News */}
-      <section className="py-16 bg-gray-50">
+      {/* News Carousel */}
+      <section className="py-16 bg-gradient-to-r from-primary-50 to-secondary-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-secondary-900 mb-4">
-              Últimas Noticias
+              Noticias del Club
             </h2>
             <p className="text-xl text-secondary-600">
-              Mantente al día con todo lo que pasa en el club
+              Desliza para ver todas las noticias
             </p>
+          </div>
+
+          {loadingInstagram ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+              <span className="ml-4 text-secondary-600">Cargando noticias...</span>
+            </div>
+          ) : (
+            <NewsCarousel news={instagramNews.length > 0 ? instagramNews : news} />
+          )}
+        </div>
+      </section>
+
+      {/* Latest News Grid */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-secondary-900 mb-4">
+              Más Noticias
+            </h2>
             {!loadingInstagram && instagramNews.length > 0 && (
-              <div className="flex items-center justify-center text-sm text-secondary-500 mt-2">
+              <div className="flex items-center justify-center text-sm text-secondary-500">
                 <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                Desde Instagram
+                Actualizadas desde Instagram
               </div>
             )}
           </div>
@@ -373,4 +393,178 @@ const Home: React.FC = () => {
   );
 };
 
+// News Carousel Component
+interface NewsCarouselProps {
+  news: any[];
+}
+
+const NewsCarousel: React.FC<NewsCarouselProps> = ({ news }) => {
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = React.useState(true);
+
+  // Auto-advance carousel
+  React.useEffect(() => {
+    if (!isAutoPlaying || news.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentIndex(prev => (prev + 1) % news.length);
+    }, 4000); // Change every 4 seconds
+
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, news.length]);
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+    setIsAutoPlaying(false);
+    // Resume auto-play after 10 seconds
+    setTimeout(() => setIsAutoPlaying(true), 10000);
+  };
+
+  const nextSlide = () => {
+    setCurrentIndex(prev => (prev + 1) % news.length);
+    setIsAutoPlaying(false);
+    setTimeout(() => setIsAutoPlaying(true), 10000);
+  };
+
+  const prevSlide = () => {
+    setCurrentIndex(prev => (prev - 1 + news.length) % news.length);
+    setIsAutoPlaying(false);
+    setTimeout(() => setIsAutoPlaying(true), 10000);
+  };
+
+  if (news.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-secondary-600">No hay noticias disponibles</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative max-w-6xl mx-auto">
+      {/* Main Carousel */}
+      <div className="relative overflow-hidden rounded-xl shadow-2xl bg-white">
+        <div 
+          className="flex transition-transform duration-500 ease-in-out"
+          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        >
+          {news.map((article, index) => (
+            <div key={article.id} className="w-full flex-shrink-0">
+              <div className="lg:flex lg:h-96">
+                {/* Image */}
+                <div className="lg:w-1/2">
+                  <img
+                    src={article.image}
+                    alt={article.title}
+                    className="w-full h-64 lg:h-full object-cover"
+                  />
+                  {article.instagramUrl && (
+                    <div className="absolute top-4 right-4 bg-pink-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                      Instagram
+                    </div>
+                  )}
+                </div>
+                
+                {/* Content */}
+                <div className="lg:w-1/2 p-8 flex flex-col justify-center">
+                  <div className="flex items-center mb-4">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      article.category === 'partidos' ? 'bg-primary-100 text-primary-600' :
+                      article.category === 'fotos' ? 'bg-secondary-100 text-secondary-600' :
+                      'bg-accent-100 text-accent-600'
+                    }`}>
+                      {article.category === 'partidos' ? '⚽ Partidos' :
+                       article.category === 'fotos' ? '📸 Galería' :
+                       '🏆 Club'}
+                    </span>
+                    <span className="text-sm text-secondary-500 ml-3">
+                      {new Date(article.date).toLocaleDateString('es-ES')}
+                    </span>
+                  </div>
+                  
+                  <h3 className="text-2xl lg:text-3xl font-bold text-secondary-900 mb-4 line-clamp-2">
+                    {article.title}
+                  </h3>
+                  
+                  <p className="text-secondary-600 mb-6 line-clamp-3 text-lg leading-relaxed">
+                    {article.summary}
+                  </p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4 text-sm text-secondary-500">
+                      {article.views && <span>👁 {article.views}</span>}
+                      {article.comments && <span>💬 {article.comments}</span>}
+                    </div>
+                    
+                    {article.instagramUrl ? (
+                      <a
+                        href={article.instagramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors inline-flex items-center"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Ver en Instagram
+                        <ArrowRight className="ml-2 w-4 h-4" />
+                      </a>
+                    ) : (
+                      <Link
+                        to="/noticias"
+                        className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors inline-flex items-center"
+                      >
+                        Leer más
+                        <ArrowRight className="ml-2 w-4 h-4" />
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Navigation Arrows */}
+      <button
+        onClick={prevSlide}
+        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white hover:bg-gray-100 text-secondary-800 p-3 rounded-full shadow-lg transition-colors z-10"
+      >
+        <ArrowRight className="w-6 h-6 transform rotate-180" />
+      </button>
+      
+      <button
+        onClick={nextSlide}
+        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white hover:bg-gray-100 text-secondary-800 p-3 rounded-full shadow-lg transition-colors z-10"
+      >
+        <ArrowRight className="w-6 h-6" />
+      </button>
+
+      {/* Indicators */}
+      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex space-x-2">
+        {news.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => goToSlide(index)}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              index === currentIndex 
+                ? 'bg-primary-600 scale-125' 
+                : 'bg-gray-300 hover:bg-gray-400'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Auto-play indicator */}
+      <div className="absolute top-4 left-4 z-10">
+        <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+          isAutoPlaying 
+            ? 'bg-green-100 text-green-800' 
+            : 'bg-gray-100 text-gray-600'
+        }`}>
+          {isAutoPlaying ? '▶ Auto' : '⏸ Pausado'}
+        </div>
+      </div>
+    </div>
+  );
+};
 export default Home;
