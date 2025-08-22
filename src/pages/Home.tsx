@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Users, Trophy, MapPin, ArrowRight, Star, Heart, Target } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { fetchInstagramPosts, convertInstagramPostsToNews, INSTAGRAM_PROFILE } from '../services/instagramService';</parameter>
+import { fetchInstagramPosts, convertInstagramPostsToNews, INSTAGRAM_PROFILE } from '../services/instagramService';
 
 const Home: React.FC = () => {
   const [instagramNews, setInstagramNews] = React.useState<any[]>([]);
