@@ -98,7 +98,7 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[70vh] flex items-center justify-center bg-gradient-to-r from-primary-900 via-primary-600 to-secondary-900">
+      <section className="relative h-[40vh] flex items-center justify-center bg-gradient-to-r from-primary-900 via-primary-600 to-secondary-900">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30"
           style={{
@@ -142,8 +142,37 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* Latest News Carousel - Moved up */}
+      <section className="py-12 bg-gradient-to-r from-primary-50 to-secondary-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl sm:text-4xl font-bold text-secondary-900 mb-4">
+              Últimas Noticias
+            </h2>
+            <p className="text-xl text-secondary-600">
+              Mantente al día con toda la actualidad del club
+            </p>
+            {!loadingInstagram && instagramNews.length > 0 && (
+              <div className="flex items-center justify-center text-sm text-secondary-500 mt-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                Actualizadas desde Instagram
+              </div>
+            )}
+          </div>
+
+          {loadingInstagram ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+              <span className="ml-4 text-secondary-600">Cargando noticias...</span>
+            </div>
+          ) : (
+            <NewsCarousel news={instagramNews.length > 0 ? instagramNews : news} />
+          )}
+        </div>
+      </section>
+
       {/* Stats Section */}
-      <section className="py-12 bg-white">
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, index) => {
@@ -172,42 +201,13 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* News Carousel */}
-      <section className="py-16 bg-gradient-to-r from-primary-50 to-secondary-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-secondary-900 mb-4">
-              Noticias del Club
-            </h2>
-            <p className="text-xl text-secondary-600">
-              Desliza para ver todas las noticias
-            </p>
-          </div>
-
-          {loadingInstagram ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-              <span className="ml-4 text-secondary-600">Cargando noticias...</span>
-            </div>
-          ) : (
-            <NewsCarousel news={instagramNews.length > 0 ? instagramNews : news} />
-          )}
-        </div>
-      </section>
-
       {/* Latest News Grid */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-secondary-900 mb-4">
-              Más Noticias
+              Todas las Noticias
             </h2>
-            {!loadingInstagram && instagramNews.length > 0 && (
-              <div className="flex items-center justify-center text-sm text-secondary-500">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                Actualizadas desde Instagram
-              </div>
-            )}
           </div>
 
           {loadingInstagram ? (
