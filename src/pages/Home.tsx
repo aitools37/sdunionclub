@@ -148,7 +148,7 @@ const Home: React.FC = () => {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, index) => {
               const Icon = stat.icon;
-              {news.slice(3, 6).map((article, index) => (
+              return (
                 <motion.div
                   key={stat.label}
                   initial={{ opacity: 0, y: 20 }}
