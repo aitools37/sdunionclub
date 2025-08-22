@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Users, Trophy, MapPin, ArrowRight, Star, Heart, Target } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { fetchInstagramPosts, convertInstagramPostsToNews } from '../services/instagramService';
+import { fetchInstagramPosts, convertInstagramPostsToNews, INSTAGRAM_PROFILE } from '../services/instagramService';</parameter>
 
 const Home: React.FC = () => {
   const [instagramNews, setInstagramNews] = React.useState<any[]>([]);
@@ -155,7 +155,14 @@ const Home: React.FC = () => {
             {!loadingInstagram && instagramNews.length > 0 && (
               <div className="flex items-center justify-center text-sm text-secondary-500 mt-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                Actualizadas desde Instagram
+                Actualizadas desde <a 
+                  href={INSTAGRAM_PROFILE.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-pink-600 hover:text-pink-700 font-medium"
+                >
+                  {INSTAGRAM_PROFILE.displayName}
+                </a>
               </div>
             )}
           </div>
@@ -275,6 +282,21 @@ const Home: React.FC = () => {
                         <ArrowRight className="ml-2 w-4 h-4" />
                       </button>
                     )}
+                    
+                    {/* Link to main Instagram profile */}
+                    {instagramNews.length === 0 && (
+                      <div className="mt-4">
+                        <a
+                          href={INSTAGRAM_PROFILE.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-pink-600 hover:text-pink-700 text-sm font-medium inline-flex items-center"
+                        >
+                          Ver en Instagram {INSTAGRAM_PROFILE.displayName}
+                          <ArrowRight className="ml-2 w-4 h-4" />
+                        </a>
+                      </div>
+                    )}</parameter>
                   </div>
                 </motion.article>
               ))}
