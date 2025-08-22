@@ -205,12 +205,10 @@ const Home: React.FC = () => {
                       <Calendar className="w-4 h-4" />
                       <span>{new Date(match.date).toLocaleDateString('es-ES', {
                         weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}</span>
-                    </div>
-                    <div>{match.time} - {match.venue}</div>
+                         year: 'numeric',
+                         month: 'long',
+                         day: 'numeric'
+                       })}</span>
                   </div>
                   <Link
                     to="/entradas"
