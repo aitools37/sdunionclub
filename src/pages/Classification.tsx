@@ -56,7 +56,7 @@ const Classification: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': process.env.REACT_APP_PARSEBOT_API_KEY || 'YOUR_API_KEY',
+          'X-API-Key': process.env.REACT_APP_PARSEBOT_API_KEY || '4e282a3c-09d9-49e8-9b54-be7c3c5222b0',
         },
         body: JSON.stringify({
           count: "100",
