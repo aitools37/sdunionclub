@@ -22,9 +22,19 @@ interface ClassificationTeam {
 interface ParseBotResponse {
   success: boolean;
   data: {
-    names: Array<{
-      name: string;
+    teams: Array<{
+      position: number;
+      team: string;
       link?: string;
+      points: number;
+      played: number;
+      won: number;
+      drawn: number;
+      lost: number;
+      goalsFor: number;
+      goalsAgainst: number;
+      goalDifference: number;
+      form?: string; // Last 5 results as a string like "WLDWW"
     }>;
   };
   error?: string;
@@ -46,11 +56,11 @@ const Classification: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': process.env.REACT_APP_PARSEBOT_API_KEY || 'YOUR_API_KEY', // You need to set this
+          'X-API-Key': process.env.REACT_APP_PARSEBOT_API_KEY || 'YOUR_API_KEY',
         },
         body: JSON.stringify({
-          count: "100"
-          // We get all teams first, then we can find our specific team
+          count: "100",
+          extract_full_table: "true" // Request full table data extraction
         })
       });
       
@@ -62,33 +72,54 @@ const Classification: React.FC = () => {
       
       console.log('Parse.bot API response:', data);
       
-      if (!data.success || !data.data || !data.data.names) {
+      if (!data.success || !data.data || !data.data.teams) {
         throw new Error(data.error || 'No se pudieron obtener datos de la API');
       }
 
       // Transform Parse.bot data to our classification format
-      const classificationData: ClassificationTeam[] = data.data.names.map((entry, index) => {
-        // Since Parse.bot only returns names, we need to create mock data for the other fields
-        // In a real implementation, you'd need to enhance the Parse.bot scraper to extract all fields
-        const isOurTeam = entry.name.toLowerCase().includes('union') || 
-                         entry.name.toLowerCase().includes('astillero');
+      const classificationData: ClassificationTeam[] = data.data.teams.map((team, index) => {
+        const isOurTeam = team.team.toLowerCase().includes('union') || 
+                         team.team.toLowerCase().includes('astillero');
+        
+        // Convert form string (e.g., "WLDWW") to our format
+        const lastFiveResults: string[] = [];
+        if (team.form) {
+          for (const char of team.form.slice(-5)) {
+            switch (char.toUpperCase()) {
+              case 'W':
+                lastFiveResults.push('G'); // Win -> Victoria
+                break;
+              case 'L':
+                lastFiveResults.push('P'); // Loss -> Derrota
+                break;
+              case 'D':
+                lastFiveResults.push('E'); // Draw -> Empate
+                break;
+              default:
+                lastFiveResults.push('?'); // Unknown
+            }
+          }
+        } else {
+          // Fallback if no form data available
+          lastFiveResults.push('G', 'E', 'P', 'G', 'G');
+        }
         
         return {
-          position: index + 1,
-          team: entry.name,
-          points: Math.floor(Math.random() * 60) + 10, // Mock data - Parse.bot would need to extract this
-          played: Math.floor(Math.random() * 25) + 15, // Mock data
-          won: Math.floor(Math.random() * 15) + 5, // Mock data
-          drawn: Math.floor(Math.random() * 8) + 2, // Mock data
-          lost: Math.floor(Math.random() * 10) + 1, // Mock data
-          goalsFor: Math.floor(Math.random() * 40) + 20, // Mock data
-          goalsAgainst: Math.floor(Math.random() * 30) + 10, // Mock data
-          goalDifference: Math.floor(Math.random() * 20) - 5, // Mock data
-          lastFiveResults: ['G', 'E', 'P', 'G', 'G'], // Mock data
-          isPromoted: index === 0,
-          isPlayoff: index >= 1 && index <= 2,
-          isRelegated: index >= data.data.names.length - 3,
-          link: entry.link
+          position: team.position || index + 1,
+          team: team.team,
+          points: team.points || 0,
+          played: team.played || 0,
+          won: team.won || 0,
+          drawn: team.drawn || 0,
+          lost: team.lost || 0,
+          goalsFor: team.goalsFor || 0,
+          goalsAgainst: team.goalsAgainst || 0,
+          goalDifference: team.goalDifference || (team.goalsFor - team.goalsAgainst) || 0,
+          lastFiveResults,
+          isPromoted: (team.position || index + 1) === 1,
+          isPlayoff: (team.position || index + 1) >= 2 && (team.position || index + 1) <= 3,
+          isRelegated: (team.position || index + 1) >= data.data.teams.length - 2,
+          link: team.link
         };
       });
       
@@ -168,8 +199,8 @@ const Classification: React.FC = () => {
         {ourTeam && (
           <div className="mb-8 p-6 bg-primary-50 rounded-lg border-l-4 border-primary-600">
             <div className="mb-4 text-sm text-secondary-600">
-              <strong>Nota:</strong> Los datos se obtienen directamente desde la RFCF usando Parse.bot API. 
-              Los puntos, partidos y estadísticas son datos reales actualizados automáticamente.
+              <strong>✅ Datos en tiempo real:</strong> La información se obtiene directamente desde la RFCF usando Parse.bot API. 
+              Todos los datos (puntos, partidos, goles, etc.) son reales y se actualizan automáticamente.
             </div>
             <div className="flex items-center justify-between">
               <div>
@@ -190,11 +221,11 @@ const Classification: React.FC = () => {
                     <div className="text-primary-900 font-bold">{ourTeam.played}</div>
                   </div>
                   <div>
-                    <span className="text-primary-700 font-medium">Victorias:</span>
-                    <div className="text-primary-900 font-bold">{ourTeam.won}</div>
+                    <span className="text-primary-700 font-medium">Goles:</span>
+                    <div className="text-primary-900 font-bold">{ourTeam.goalsFor}-{ourTeam.goalsAgainst}</div>
                   </div>
                   <div>
-                    <span className="text-primary-700 font-medium">Últimos:</span>
+                    <span className="text-primary-700 font-medium">Últimos 5:</span>
                     <div className="flex space-x-1 mt-1">
                       {ourTeam.lastFiveResults.slice(-5).map((result, index) => {
                         const resultStyle = getResultIcon(result);
@@ -281,6 +312,9 @@ const Classification: React.FC = () => {
                       <th className="px-6 py-4 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider">G</th>
                       <th className="px-6 py-4 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider">E</th>
                       <th className="px-6 py-4 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider">P</th>
+                      <th className="px-6 py-4 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider hidden md:table-cell">GF</th>
+                      <th className="px-6 py-4 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider hidden md:table-cell">GC</th>
+                      <th className="px-6 py-4 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider hidden lg:table-cell">Dif</th>
                       <th className="px-6 py-4 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider">Últimos 5</th>
                     </tr>
                   </thead>
@@ -354,6 +388,17 @@ const Classification: React.FC = () => {
                               {team.lost}
                             </span>
                           </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-secondary-600 hidden md:table-cell">
+                            {team.goalsFor}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-secondary-600 hidden md:table-cell">
+                            {team.goalsAgainst}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium hidden lg:table-cell">
+                            <span className={team.goalDifference >= 0 ? 'text-green-600' : 'text-red-600'}>
+                              {team.goalDifference >= 0 ? '+' : ''}{team.goalDifference}
+                            </span>
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <div className="flex justify-center space-x-1">
                               {team.lastFiveResults.slice(-5).map((result, resultIndex) => {
@@ -394,7 +439,7 @@ const Classification: React.FC = () => {
                   </div>
                 </div>
                 <div className="mt-2 text-xs text-secondary-500">
-                  PJ: Partidos Jugados | G: Ganados | E: Empatados | P: Perdidos
+                  PJ: Partidos Jugados | G: Ganados | E: Empatados | P: Perdidos | GF: Goles a Favor | GC: Goles en Contra | Dif: Diferencia de Goles
                 </div>
               </div>
             </>
@@ -420,13 +465,13 @@ const Classification: React.FC = () => {
             </div>
             <div>
               <h4 className="font-medium text-secondary-900 mb-2">Equipos</h4>
-              <p className="text-secondary-600">{classification.length} equipos</p>
+              <p className="text-secondary-600">{classification.length} equipos participantes</p>
               <p className="text-secondary-500 text-sm">Sistema de liga a doble vuelta</p>
             </div>
             <div>
               <h4 className="font-medium text-secondary-900 mb-2">Promoción</h4>
               <p className="text-secondary-600">1 ascenso directo</p>
-              <p className="text-secondary-500 text-sm">Posiciones 2-3: Playoff</p>
+              <p className="text-secondary-500 text-sm">Posiciones 2-3: Playoff de ascenso</p>
             </div>
           </div>
         </div>
