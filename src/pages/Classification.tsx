@@ -46,21 +46,58 @@ const Classification: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
+  // Fallback data for development/testing
+  const getFallbackClassification = (): ClassificationTeam[] => {
+    return [
+      {
+        position: 1,
+        team: 'S.D. UNION CLUB',
+        points: 52,
+        played: 22,
+        won: 16,
+        drawn: 4,
+        lost: 2,
+        goalsFor: 58,
+        goalsAgainst: 18,
+        goalDifference: 40,
+        lastFiveResults: ['G', 'G', 'E', 'G', 'G'],
+        isPromoted: true,
+        link: 'https://www.rfcf.es/ejemplo'
+      },
+      {
+        position: 2,
+        team: 'CD Laredo',
+        points: 48,
+        played: 22,
+        won: 15,
+        drawn: 3,
+        lost: 4,
+        goalsFor: 45,
+        goalsAgainst: 22,
+        goalDifference: 23,
+        lastFiveResults: ['G', 'P', 'G', 'G', 'E'],
+        isPlayoff: true
+      },
+      // Add more teams...
+    ];
+  };
+
   const fetchClassification = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Call Parse.bot API to get classification data
+      console.log('Fetching classification data from Parse.bot API...');
+      
       const response = await fetch('https://api.parse.bot/scraper/99019bdc-3b09-46cb-888b-410d26c62f99/run', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': process.env.REACT_APP_PARSEBOT_API_KEY || '4e282a3c-09d9-49e8-9b54-be7c3c5222b0',
+          'X-API-Key': process.env.REACT_APP_PARSEBOT_API_KEY || 'tu_api_key_aqui',
         },
         body: JSON.stringify({
           count: "100",
-          extract_full_table: "true" // Request full table data extraction
+          extract_full_table: "true"
         })
       });
       
@@ -70,11 +107,14 @@ const Classification: React.FC = () => {
       
       const data: ParseBotResponse = await response.json();
       
-      console.log('Parse.bot API response:', data);
+      console.log('✅ Parse.bot API response received:', data);
       
       if (!data.success || !data.data || !data.data.teams) {
-        throw new Error(data.error || 'No se pudieron obtener datos de la API');
+        console.log('❌ API response structure:', data);
+        throw new Error(data.error || 'Estructura de respuesta inesperada de Parse.bot');
       }
+      
+      console.log(`📊 Found ${data.data.teams.length} teams in classification`);
 
       // Transform Parse.bot data to our classification format
       const classificationData: ClassificationTeam[] = data.data.teams.map((team, index) => {
@@ -84,7 +124,8 @@ const Classification: React.FC = () => {
         // Convert form string (e.g., "WLDWW") to our format
         const lastFiveResults: string[] = [];
         if (team.form) {
-          for (const char of team.form.slice(-5)) {
+          console.log(`Converting form data for ${team.team}: ${team.form}`);
+          for (const char of team.form.toString().slice(-5)) {
             switch (char.toUpperCase()) {
               case 'W':
                 lastFiveResults.push('G'); // Win -> Victoria
@@ -100,25 +141,25 @@ const Classification: React.FC = () => {
             }
           }
         } else {
-          // Fallback if no form data available
+          // Fallback if no form data available - generate realistic data
           lastFiveResults.push('G', 'E', 'P', 'G', 'G');
         }
         
         return {
-          position: team.position || index + 1,
+          position: Number(team.position) || index + 1,
           team: team.team,
-          points: team.points || 0,
-          played: team.played || 0,
-          won: team.won || 0,
-          drawn: team.drawn || 0,
-          lost: team.lost || 0,
-          goalsFor: team.goalsFor || 0,
-          goalsAgainst: team.goalsAgainst || 0,
-          goalDifference: team.goalDifference || (team.goalsFor - team.goalsAgainst) || 0,
+          points: Number(team.points) || 0,
+          played: Number(team.played) || 0,
+          won: Number(team.won) || 0,
+          drawn: Number(team.drawn) || 0,
+          lost: Number(team.lost) || 0,
+          goalsFor: Number(team.goalsFor) || 0,
+          goalsAgainst: Number(team.goalsAgainst) || 0,
+          goalDifference: Number(team.goalDifference) || (Number(team.goalsFor || 0) - Number(team.goalsAgainst || 0)),
           lastFiveResults,
-          isPromoted: (team.position || index + 1) === 1,
-          isPlayoff: (team.position || index + 1) >= 2 && (team.position || index + 1) <= 3,
-          isRelegated: (team.position || index + 1) >= data.data.teams.length - 2,
+          isPromoted: (Number(team.position) || index + 1) === 1,
+          isPlayoff: (Number(team.position) || index + 1) >= 2 && (Number(team.position) || index + 1) <= 3,
+          isRelegated: (Number(team.position) || index + 1) >= data.data.teams.length - 2,
           link: team.link
         };
       });
@@ -129,9 +170,18 @@ const Classification: React.FC = () => {
       
       setClassification(classificationData);
       setLastUpdated(new Date());
+      console.log('✅ Classification data successfully processed and stored');
     } catch (error) {
       console.error('Error fetching classification:', error);
-      setError(`Error al cargar la clasificación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      setError(`Error al cargar la clasificación: ${errorMessage}`);
+      
+      // Optional: Load fallback data in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Loading fallback data for development...');
+        setClassification(getFallbackClassification());
+        setLastUpdated(new Date());
+      }
     } finally {
       setLoading(false);
     }
