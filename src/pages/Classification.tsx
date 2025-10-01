@@ -89,13 +89,16 @@ const Classification: React.FC = () => {
 
       console.log('Fetching classification data from Parse.bot API...');
       
+      const rfcfUrl = 'https://www.rfcf.es/pnfg/NPcd/NFG_VisClasificacion?cod_primaria=1000120&codcompeticion=22119651&codgrupo=22119687&cod_agrupacion=1';
+
       const response = await fetch('https://api.parse.bot/scraper/99019bdc-3b09-46cb-888b-410d26c62f99/run', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': process.env.REACT_APP_PARSEBOT_API_KEY || 'tu_api_key_aqui',
+          'X-API-Key': import.meta.env.VITE_PARSEBOT_API_KEY || 'tu_api_key_aqui',
         },
         body: JSON.stringify({
+          url: rfcfUrl,
           count: "100",
           extract_full_table: "true"
         })
@@ -118,8 +121,12 @@ const Classification: React.FC = () => {
 
       // Transform Parse.bot data to our classification format
       const classificationData: ClassificationTeam[] = data.data.teams.map((team, index) => {
-        const isOurTeam = team.team.toLowerCase().includes('union') || 
-                         team.team.toLowerCase().includes('astillero');
+        const teamName = team.team.toLowerCase().replace(/\s+/g, ' ').trim();
+        const isOurTeam = teamName.includes('union') ||
+                         teamName.includes('s.d. union') ||
+                         teamName.includes('s.d union') ||
+                         teamName.includes('sd union') ||
+                         teamName.includes('union club');
         
         // Convert form string (e.g., "WLDWW") to our format
         const lastFiveResults: string[] = [];
@@ -217,10 +224,14 @@ const Classification: React.FC = () => {
     return '';
   };
 
-  const ourTeam = classification.find(team => 
-    team.team.toLowerCase().includes('unión') || 
-    team.team.toLowerCase().includes('astillero')
-  );
+  const ourTeam = classification.find(team => {
+    const teamName = team.team.toLowerCase().replace(/\s+/g, ' ').trim();
+    return teamName.includes('union') ||
+           teamName.includes('s.d. union') ||
+           teamName.includes('s.d union') ||
+           teamName.includes('sd union') ||
+           teamName.includes('union club');
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -233,7 +244,7 @@ const Classification: React.FC = () => {
               <h1 className="text-3xl font-bold text-secondary-900">Clasificación</h1>
             </div>
             <p className="text-lg text-secondary-600 mb-4">
-              Segunda Regional Grupo B - Temporada 2024-2025
+              Segunda Regional Grupo B - Temporada 2025-2026
             </p>
             {lastUpdated && (
               <p className="text-sm text-secondary-500">
@@ -370,8 +381,12 @@ const Classification: React.FC = () => {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {classification.map((team, index) => {
-                      const isOurTeam = team.team.toLowerCase().includes('unión') || 
-                                       team.team.toLowerCase().includes('astillero');
+                      const teamName = team.team.toLowerCase().replace(/\s+/g, ' ').trim();
+                      const isOurTeam = teamName.includes('union') ||
+                                       teamName.includes('s.d. union') ||
+                                       teamName.includes('s.d union') ||
+                                       teamName.includes('sd union') ||
+                                       teamName.includes('union club');
                       
                       return (
                         <tr 
@@ -511,7 +526,7 @@ const Classification: React.FC = () => {
             <div>
               <h4 className="font-medium text-secondary-900 mb-2">Competición</h4>
               <p className="text-secondary-600">Segunda Regional Grupo B</p>
-              <p className="text-secondary-500 text-sm">Temporada 2024-2025</p>
+              <p className="text-secondary-500 text-sm">Temporada 2025-2026</p>
             </div>
             <div>
               <h4 className="font-medium text-secondary-900 mb-2">Equipos</h4>
