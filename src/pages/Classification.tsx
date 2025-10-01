@@ -1,44 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Award, Users, Trophy, Calendar, Loader, RefreshCw, ExternalLink } from 'lucide-react';
-
-interface ClassificationTeam {
-  position: number;
-  team: string;
-  points: number;
-  played: number;
-  won: number;
-  drawn: number;
-  lost: number;
-  goalsFor: number;
-  goalsAgainst: number;
-  goalDifference: number;
-  lastFiveResults: string[];
-  isPromoted?: boolean;
-  isRelegated?: boolean;
-  isPlayoff?: boolean;
-  link?: string;
-}
-
-interface ParseBotResponse {
-  success: boolean;
-  data: {
-    teams: Array<{
-      position: number;
-      team: string;
-      link?: string;
-      points: number;
-      played: number;
-      won: number;
-      drawn: number;
-      lost: number;
-      goalsFor: number;
-      goalsAgainst: number;
-      goalDifference: number;
-      form?: string; // Last 5 results as a string like "WLDWW"
-    }>;
-  };
-  error?: string;
-}
+import { classificationService, ClassificationTeam } from '../services/classificationService';
 
 const Classification: React.FC = () => {
   const [classification, setClassification] = useState<ClassificationTeam[]>([]);
@@ -46,151 +8,57 @@ const Classification: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  // Fallback data for development/testing
-  const getFallbackClassification = (): ClassificationTeam[] => {
-    return [
-      {
-        position: 1,
-        team: 'S.D. UNION CLUB',
-        points: 52,
-        played: 22,
-        won: 16,
-        drawn: 4,
-        lost: 2,
-        goalsFor: 58,
-        goalsAgainst: 18,
-        goalDifference: 40,
-        lastFiveResults: ['G', 'G', 'E', 'G', 'G'],
-        isPromoted: true,
-        link: 'https://www.rfcf.es/ejemplo'
-      },
-      {
-        position: 2,
-        team: 'CD Laredo',
-        points: 48,
-        played: 22,
-        won: 15,
-        drawn: 3,
-        lost: 4,
-        goalsFor: 45,
-        goalsAgainst: 22,
-        goalDifference: 23,
-        lastFiveResults: ['G', 'P', 'G', 'G', 'E'],
-        isPlayoff: true
-      },
-      // Add more teams...
-    ];
-  };
+  const [isScraping, setIsScraping] = useState(false);
 
   const fetchClassification = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      console.log('Fetching classification data from Parse.bot API...');
-      
-      const rfcfUrl = 'https://www.rfcf.es/pnfg/NPcd/NFG_VisClasificacion?cod_primaria=1000120&codcompeticion=22119651&codgrupo=22119687&cod_agrupacion=1';
+      console.log('Fetching classification data from Supabase...');
 
-      const response = await fetch('https://api.parse.bot/scraper/99019bdc-3b09-46cb-888b-410d26c62f99/run', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': import.meta.env.VITE_PARSEBOT_API_KEY || 'tu_api_key_aqui',
-        },
-        body: JSON.stringify({
-          url: rfcfUrl,
-          count: "100",
-          extract_full_table: "true"
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data: ParseBotResponse = await response.json();
-      
-      console.log('✅ Parse.bot API response received:', data);
-      
-      if (!data.success || !data.data || !data.data.teams) {
-        console.log('❌ API response structure:', data);
-        throw new Error(data.error || 'Estructura de respuesta inesperada de Parse.bot');
-      }
-      
-      console.log(`📊 Found ${data.data.teams.length} teams in classification`);
+      const classificationData = await classificationService.getClassification();
 
-      // Transform Parse.bot data to our classification format
-      const classificationData: ClassificationTeam[] = data.data.teams.map((team, index) => {
-        const teamName = team.team.toLowerCase().replace(/\s+/g, ' ').trim();
-        const isOurTeam = teamName.includes('union') ||
-                         teamName.includes('s.d. union') ||
-                         teamName.includes('s.d union') ||
-                         teamName.includes('sd union') ||
-                         teamName.includes('union club');
-        
-        // Convert form string (e.g., "WLDWW") to our format
-        const lastFiveResults: string[] = [];
-        if (team.form) {
-          console.log(`Converting form data for ${team.team}: ${team.form}`);
-          for (const char of team.form.toString().slice(-5)) {
-            switch (char.toUpperCase()) {
-              case 'W':
-                lastFiveResults.push('G'); // Win -> Victoria
-                break;
-              case 'L':
-                lastFiveResults.push('P'); // Loss -> Derrota
-                break;
-              case 'D':
-                lastFiveResults.push('E'); // Draw -> Empate
-                break;
-              default:
-                lastFiveResults.push('?'); // Unknown
-            }
-          }
-        } else {
-          // Fallback if no form data available - generate realistic data
-          lastFiveResults.push('G', 'E', 'P', 'G', 'G');
-        }
-        
-        return {
-          position: Number(team.position) || index + 1,
-          team: team.team,
-          points: Number(team.points) || 0,
-          played: Number(team.played) || 0,
-          won: Number(team.won) || 0,
-          drawn: Number(team.drawn) || 0,
-          lost: Number(team.lost) || 0,
-          goalsFor: Number(team.goalsFor) || 0,
-          goalsAgainst: Number(team.goalsAgainst) || 0,
-          goalDifference: Number(team.goalDifference) || (Number(team.goalsFor || 0) - Number(team.goalsAgainst || 0)),
-          lastFiveResults,
-          isPromoted: (Number(team.position) || index + 1) === 1,
-          isPlayoff: (Number(team.position) || index + 1) >= 2 && (Number(team.position) || index + 1) <= 3,
-          isRelegated: (Number(team.position) || index + 1) >= data.data.teams.length - 2,
-          link: team.link
-        };
-      });
-      
       if (classificationData.length === 0) {
-        throw new Error('No se pudieron extraer datos de la clasificación');
+        setError('No hay datos de clasificación disponibles. Haz clic en "Actualizar desde RFCF" para obtener los datos más recientes.');
+        return;
       }
-      
+
       setClassification(classificationData);
-      setLastUpdated(new Date());
-      console.log('✅ Classification data successfully processed and stored');
+
+      const lastUpdate = await classificationService.getLastUpdateTime();
+      setLastUpdated(lastUpdate);
+
+      console.log('✅ Classification data loaded from database:', classificationData.length, 'teams');
     } catch (error) {
       console.error('Error fetching classification:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       setError(`Error al cargar la clasificación: ${errorMessage}`);
-      
-      // Optional: Load fallback data in development
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔄 Loading fallback data for development...');
-        setClassification(getFallbackClassification());
-        setLastUpdated(new Date());
-      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleScrapeRFCF = async () => {
+    try {
+      setIsScraping(true);
+      setError(null);
+
+      console.log('Triggering RFCF scrape...');
+      const result = await classificationService.triggerScrape();
+
+      if (result.success) {
+        console.log('✅ Scrape completed successfully');
+        await fetchClassification();
+      } else {
+        throw new Error(result.error || 'Error al actualizar datos');
+      }
+    } catch (error) {
+      console.error('Error scraping RFCF:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      setError(`Error al actualizar desde RFCF: ${errorMessage}`);
+    } finally {
+      setIsScraping(false);
     }
   };
 
@@ -260,8 +128,8 @@ const Classification: React.FC = () => {
         {ourTeam && (
           <div className="mb-8 p-6 bg-primary-50 rounded-lg border-l-4 border-primary-600">
             <div className="mb-4 text-sm text-secondary-600">
-              <strong>✅ Datos en tiempo real:</strong> La información se obtiene directamente desde la RFCF usando Parse.bot API. 
-              Todos los datos (puntos, partidos, goles, etc.) son reales y se actualizan automáticamente.
+              <strong>✅ Datos oficiales de la RFCF:</strong> La información se obtiene directamente desde la página oficial de la Real Federación Cántabra de Fútbol.
+              Todos los datos (puntos, partidos, goles, etc.) son oficiales y actualizados.
             </div>
             <div className="flex items-center justify-between">
               <div>
@@ -315,18 +183,30 @@ const Classification: React.FC = () => {
         {/* Refresh Button */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-secondary-900">Tabla de Clasificación</h2>
-          <div className="flex space-x-4">
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={fetchClassification}
-              disabled={loading}
-              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors"
+              disabled={loading || isScraping}
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
             >
               {loading ? (
                 <Loader className="w-4 h-4 animate-spin" />
               ) : (
                 <RefreshCw className="w-4 h-4" />
               )}
-              <span>Actualizar</span>
+              <span>Recargar</span>
+            </button>
+            <button
+              onClick={handleScrapeRFCF}
+              disabled={loading || isScraping}
+              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors"
+            >
+              {isScraping ? (
+                <Loader className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+              <span>Actualizar desde RFCF</span>
             </button>
             <a
               href="https://www.rfcf.es/pnfg/NPcd/NFG_VisClasificacion?cod_primaria=1000120&codcompeticion=22119651&codgrupo=22119687&cod_agrupacion=1"
