@@ -6,18 +6,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-interface Team {
-  position: number;
-  name: string;
-  points: number;
-  played: number;
-  won: number;
-  drawn: number;
-  lost: number;
-  goalsFor: number;
-  goalsAgainst: number;
-  goalDifference: number;
+interface ParseBotTeam {
+  position?: string | number;
+  team?: string;
+  points?: string | number;
+  played?: string | number;
+  won?: string | number;
+  drawn?: string | number;
+  lost?: string | number;
+  goalsFor?: string | number;
+  goalsAgainst?: string | number;
+  goalDifference?: string | number;
   form?: string;
+}
+
+interface ParseBotResponse {
+  success: boolean;
+  data?: {
+    teams?: ParseBotTeam[];
+    [key: string]: any;
+  };
+  error?: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -31,9 +40,15 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const parseBotApiKey = Deno.env.get('PARSEBOT_API_KEY');
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Starting RFCF classification scrape...');
+    console.log('Starting RFCF classification scrape via Parse.bot...');
+
+    if (!parseBotApiKey) {
+      throw new Error('PARSEBOT_API_KEY not configured');
+    }
 
     // Get active competition
     const { data: competition, error: compError } = await supabase
@@ -48,43 +63,70 @@ Deno.serve(async (req: Request) => {
 
     console.log('Active competition:', competition.name);
 
-    // Construct RFCF URL
-    const rfcfUrl = `https://www.rfcf.es/pnfg/NPcd/NFG_VisClasificacion?cod_primaria=1000120&codcompeticion=${competition.rfcf_competition_code}&codgrupo=${competition.rfcf_group_code}&cod_agrupacion=1`;
+    // Call Parse.bot API with the updated scraper ID
+    const parseBotUrl = 'https://api.parse.bot/scraper/60aee77f-422f-429b-ba22-26756d847d81/run';
     
-    console.log('Fetching from:', rfcfUrl);
+    console.log('Calling Parse.bot API...');
 
-    // Fetch the RFCF page
-    const response = await fetch(rfcfUrl, {
+    const parseBotResponse = await fetch(parseBotUrl, {
+      method: 'POST',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Content-Type': 'application/json',
+        'X-API-Key': parseBotApiKey,
       },
+      body: JSON.stringify({ count: 1 }),
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch RFCF page: ${response.status}`);
+    if (!parseBotResponse.ok) {
+      throw new Error(`Parse.bot API error: ${parseBotResponse.status} ${parseBotResponse.statusText}`);
     }
 
-    const html = await response.text();
-    console.log('HTML fetched, length:', html.length);
-
-    // Parse the HTML to extract classification data
-    const teams = parseClassificationTable(html);
+    const parseBotData: ParseBotResponse = await parseBotResponse.json();
     
-    if (teams.length === 0) {
-      throw new Error('No teams found in classification table');
+    console.log('Parse.bot response received:', {
+      success: parseBotData.success,
+      hasData: !!parseBotData.data,
+      hasTeams: !!parseBotData.data?.teams,
+      teamsCount: parseBotData.data?.teams?.length || 0,
+    });
+
+    if (!parseBotData.success || !parseBotData.data?.teams) {
+      throw new Error(parseBotData.error || 'No teams data received from Parse.bot');
     }
 
-    console.log(`Found ${teams.length} teams`);
+    const teams = parseBotData.data.teams;
+    console.log(`Processing ${teams.length} teams...`);
 
     // Store teams and standings in database
     const totalTeams = teams.length;
-    for (const team of teams) {
+    let processedCount = 0;
+
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      
+      // Extract and clean team data
+      const teamName = String(team.team || `Team ${i + 1}`).trim();
+      const position = parseInt(String(team.position || i + 1));
+      const points = parseInt(String(team.points || 0));
+      const played = parseInt(String(team.played || 0));
+      const won = parseInt(String(team.won || 0));
+      const drawn = parseInt(String(team.drawn || 0));
+      const lost = parseInt(String(team.lost || 0));
+      const goalsFor = parseInt(String(team.goalsFor || 0));
+      const goalsAgainst = parseInt(String(team.goalsAgainst || 0));
+      const goalDifference = parseInt(String(team.goalDifference || (goalsFor - goalsAgainst)));
+      const form = String(team.form || '').slice(-5);
+
+      // Check if this is S.D. Union Club
+      const isOurTeam = teamName.toLowerCase().includes('union');
+
       // Insert or update team
       const { data: teamData, error: teamError } = await supabase
         .from('teams')
         .upsert({
-          name: team.name,
-          short_name: team.name,
+          name: teamName,
+          short_name: teamName,
+          is_our_team: isOurTeam,
         }, {
           onConflict: 'name',
           ignoreDuplicates: false,
@@ -93,14 +135,14 @@ Deno.serve(async (req: Request) => {
         .maybeSingle();
 
       if (teamError || !teamData) {
-        console.error('Error upserting team:', team.name, teamError);
+        console.error('Error upserting team:', teamName, teamError);
         continue;
       }
 
       // Determine position flags
-      const isPromoted = team.position === 1;
-      const isPlayoff = team.position >= 2 && team.position <= 3;
-      const isRelegated = team.position > totalTeams - 3;
+      const isPromoted = position === 1;
+      const isPlayoff = position >= 2 && position <= 3;
+      const isRelegated = position > totalTeams - 3;
 
       // Insert or update standing
       const { error: standingError } = await supabase
@@ -108,16 +150,16 @@ Deno.serve(async (req: Request) => {
         .upsert({
           competition_id: competition.id,
           team_id: teamData.id,
-          position: team.position,
-          points: team.points,
-          played: team.played,
-          won: team.won,
-          drawn: team.drawn,
-          lost: team.lost,
-          goals_for: team.goalsFor,
-          goals_against: team.goalsAgainst,
-          goal_difference: team.goalDifference,
-          form: team.form || '',
+          position: position,
+          points: points,
+          played: played,
+          won: won,
+          drawn: drawn,
+          lost: lost,
+          goals_for: goalsFor,
+          goals_against: goalsAgainst,
+          goal_difference: goalDifference,
+          form: form,
           is_promoted: isPromoted,
           is_playoff: isPlayoff,
           is_relegated: isRelegated,
@@ -128,17 +170,20 @@ Deno.serve(async (req: Request) => {
         });
 
       if (standingError) {
-        console.error('Error upserting standing:', team.name, standingError);
+        console.error('Error upserting standing:', teamName, standingError);
+      } else {
+        processedCount++;
       }
     }
 
-    console.log('Classification data updated successfully');
+    console.log(`Classification data updated successfully: ${processedCount}/${teams.length} teams`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Classification data updated',
-        teams: teams.length,
+        message: 'Classification data updated from RFCF via Parse.bot',
+        teams: processedCount,
+        total: teams.length,
         timestamp: new Date().toISOString(),
       }),
       {
@@ -165,70 +210,3 @@ Deno.serve(async (req: Request) => {
     );
   }
 });
-
-function parseClassificationTable(html: string): Team[] {
-  const teams: Team[] = [];
-  
-  try {
-    // Look for table rows - RFCF uses specific patterns
-    // This is a basic parser - may need adjustment based on actual HTML structure
-    
-    // Try to find the classification table
-    const tableMatch = html.match(/<table[^>]*class=["']?[^"']*clasificacion[^"']*["']?[^>]*>([\s\S]*?)<\/table>/i);
-    
-    if (!tableMatch) {
-      console.log('Classification table not found with class, trying alternate patterns...');
-      // Try other patterns or extract all tables
-      return extractFromAllTables(html);
-    }
-
-    const tableContent = tableMatch[1];
-    const rowMatches = tableContent.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi);
-    
-    let position = 0;
-    for (const rowMatch of rowMatches) {
-      const rowHtml = rowMatch[1];
-      
-      // Skip header rows
-      if (rowHtml.includes('<th') || rowHtml.includes('Equipo') || rowHtml.includes('Puntos')) {
-        continue;
-      }
-      
-      // Extract cells
-      const cells = Array.from(rowHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi))
-        .map(m => m[1].replace(/<[^>]+>/g, '').trim());
-      
-      if (cells.length >= 10) {
-        position++;
-        teams.push({
-          position: position,
-          name: cells[1] || `Team ${position}`,
-          points: parseInt(cells[2]) || 0,
-          played: parseInt(cells[3]) || 0,
-          won: parseInt(cells[4]) || 0,
-          drawn: parseInt(cells[5]) || 0,
-          lost: parseInt(cells[6]) || 0,
-          goalsFor: parseInt(cells[7]) || 0,
-          goalsAgainst: parseInt(cells[8]) || 0,
-          goalDifference: parseInt(cells[9]) || 0,
-          form: cells[10] || '',
-        });
-      }
-    }
-  } catch (error) {
-    console.error('Error parsing table:', error);
-  }
-  
-  return teams;
-}
-
-function extractFromAllTables(html: string): Team[] {
-  // Fallback: try to extract from any table that looks like classification data
-  const teams: Team[] = [];
-  
-  // Look for numeric patterns that might indicate standings
-  // This is a best-effort approach
-  console.log('Using fallback extraction method');
-  
-  return teams;
-}
