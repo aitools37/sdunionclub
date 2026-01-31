@@ -1,184 +1,478 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Users, Trophy, MapPin, ArrowRight, Star, Heart, Target } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { 
+  Calendar, Users, Trophy, MapPin, ArrowRight, Star, Heart, 
+  Target, Ticket, ShoppingBag, TrendingUp, Newspaper, Play,
+  ChevronLeft, ChevronRight, Instagram
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Components
+import NextMatchCountdown from '../components/NextMatchCountdown';
+import StandingsWidget from '../components/StandingsWidget';
+import MatchCard from '../components/MatchCard';
+import SocialFeed from '../components/SocialFeed';
+
+// Services
+import { calendarService, MatchDisplay } from '../services/calendarService';
 import { fetchInstagramPosts, convertInstagramPostsToNews, INSTAGRAM_PROFILE } from '../services/instagramService';
+import { classificationService } from '../services/classificationService';
 
 const Home: React.FC = () => {
-  const [instagramNews, setInstagramNews] = React.useState<any[]>([]);
-  const [loadingInstagram, setLoadingInstagram] = React.useState(true);
+  const [nextMatch, setNextMatch] = useState<MatchDisplay | null>(null);
+  const [upcomingMatches, setUpcomingMatches] = useState<MatchDisplay[]>([]);
+  const [recentResults, setRecentResults] = useState<MatchDisplay[]>([]);
+  const [news, setNews] = useState<any[]>([]);
+  const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
+  const [loadingNews, setLoadingNews] = useState(true);
+  const [ourPosition, setOurPosition] = useState<number | null>(null);
+  const [ourPoints, setOurPoints] = useState<number | null>(null);
 
-  React.useEffect(() => {
-    const loadInstagramPosts = async () => {
+  useEffect(() => {
+    const loadData = async () => {
+      // Load matches
+      const [next, upcoming, past] = await Promise.all([
+        calendarService.getNextMatch(),
+        calendarService.getUpcomingMatches(3),
+        calendarService.getPastMatches(3)
+      ]);
+      
+      setNextMatch(next);
+      setUpcomingMatches(upcoming);
+      setRecentResults(past);
+
+      // Load classification data for our team
+      try {
+        const standings = await classificationService.getClassification();
+        const ourTeam = standings.find(team => 
+          team.team.toLowerCase().includes('union')
+        );
+        if (ourTeam) {
+          setOurPosition(ourTeam.position);
+          setOurPoints(ourTeam.points);
+        }
+      } catch (error) {
+        console.error('Error loading standings:', error);
+      }
+
+      // Load Instagram posts
       try {
         const posts = await fetchInstagramPosts(6);
         const newsData = convertInstagramPostsToNews(posts);
-        setInstagramNews(newsData);
+        setNews(newsData);
       } catch (error) {
-        console.error('Error loading Instagram posts:', error);
+        console.error('Error loading Instagram:', error);
       } finally {
-        setLoadingInstagram(false);
+        setLoadingNews(false);
       }
     };
 
-    loadInstagramPosts();
+    loadData();
   }, []);
 
+  // Auto-advance news carousel
+  useEffect(() => {
+    if (news.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentNewsIndex(prev => (prev + 1) % news.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [news.length]);
+
   const stats = [
-    { label: 'Años de Historia', value: '102', icon: Trophy },
-    { label: 'Socios Activos', value: '1,250', icon: Users },
-    { label: 'Capacidad Estadio', value: '617', icon: MapPin },
-    { label: 'Equipos', value: '8', icon: Star },
+    { label: 'Años de Historia', value: '103', icon: Trophy, color: 'text-yellow-500' },
+    { label: 'Socios Activos', value: '1,250', icon: Users, color: 'text-primary-500' },
+    { label: 'Posición Actual', value: ourPosition ? `${ourPosition}º` : '-', icon: TrendingUp, color: 'text-green-500' },
+    { label: 'Puntos', value: ourPoints?.toString() || '-', icon: Star, color: 'text-orange-500' },
   ];
 
-  const upcomingMatches = [
-    {
-      id: 1,
-      opponent: 'CD Laredo',
-      date: '2024-03-15',
-      time: '17:00',
-      venue: 'La Planchada',
-      competition: 'Segunda Regional',
-    },
-    {
-      id: 2,
-      opponent: 'UD Samano',
-      date: '2024-03-22',
-      time: '16:30',
-      venue: 'Campo Municipal Samano',
-      competition: 'Segunda Regional',
-    },
-    {
-      id: 3,
-      opponent: 'Real Racing Santander B',
-      date: '2024-03-29',
-      time: '18:00',
-      venue: 'La Planchada',
-      competition: 'Segunda Regional',
-    },
-  ];
-
-  // Use Instagram news or fallback to static news
-  const news = instagramNews.length > 0 ? instagramNews : [
-    {
-      id: 1,
-      title: 'Victoria contundente ante el CD Laredo por 3-0',
-      summary: 'Gran actuación del primer equipo en La Planchada con goles de Martín, González y Pérez.',
-      date: '2024-03-08',
-      image: 'https://images.pexels.com/photos/274506/pexels-photo-274506.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop',
-      author: 'Redacción Club',
-      views: 145,
-      comments: 8,
-      category: 'partidos',
-    },
-    {
-      id: 2,
-      title: 'Renovación del convenio con las Escuelas Municipales',
-      summary: 'El club renueva su compromiso con la formación de jóvenes talentos de El Astillero.',
-      date: '2024-03-05',
-      image: 'https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop',
-      author: 'Junta Directiva',
-      views: 67,
-      comments: 12,
-      category: 'club',
-    },
-    {
-      id: 3,
-      title: 'Nueva camiseta conmemorativa del centenario',
-      summary: 'Presentamos el diseño especial que celebra los 102 años de historia del club.',
-      date: '2024-03-01',
-      image: 'https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop',
-      author: 'Marketing Club',
-      views: 203,
-      comments: 15,
-      category: 'club',
-    },
+  const quickLinks = [
+    { name: 'Entradas', icon: Ticket, path: '/entradas', color: 'bg-primary-600 hover:bg-primary-700' },
+    { name: 'Calendario', icon: Calendar, path: '/calendario', color: 'bg-secondary-600 hover:bg-secondary-700' },
+    { name: 'Clasificación', icon: TrendingUp, path: '/clasificacion', color: 'bg-green-600 hover:bg-green-700' },
+    { name: 'Tienda', icon: ShoppingBag, path: '/tienda', color: 'bg-purple-600 hover:bg-purple-700' },
   ];
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative h-[40vh] flex items-center justify-center bg-gradient-to-r from-primary-900 via-primary-600 to-secondary-900">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30"
-          style={{
-            backgroundImage: 'url(https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop)'
-          }}
-        />
-        <div className="relative z-10 text-center text-white px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section - Fullscreen with Video/Image background */}
+      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
+        {/* Background */}
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: 'url(https://images.pexels.com/photos/46798/the-ball-stadion-football-the-pitch-46798.jpeg?auto=compress&cs=tinysrgb&w=1920)'
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-900/95 via-primary-800/90 to-secondary-900/95" />
+          
+          {/* Animated overlay pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute inset-0" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }} />
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 text-center text-white px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="max-w-4xl mx-auto"
           >
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold mb-6">
+            {/* Badge */}
+            <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              <span className="text-sm font-medium">Temporada 2025-2026</span>
+            </div>
+
+            {/* Club Logo */}
+            <div className="mb-6">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/en/0/01/Uni%C3%B3n_Club_Astillero.png"
+                alt="S.D. Unión Club de Astillero"
+                className="w-28 h-28 mx-auto drop-shadow-2xl"
+              />
+            </div>
+
+            {/* Title */}
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold mb-4">
               <span className="block">S.D. Unión Club</span>
               <span className="block text-primary-300">de Astillero</span>
             </h1>
-            <p className="text-xl sm:text-2xl mb-8 text-gray-200 max-w-2xl mx-auto">
-              Unidos desde 1922, representando con orgullo a El Astillero en cada partido
-            </p>
-            <div className="text-2xl font-semibold text-primary-300 mb-8">
+
+            {/* Motto */}
+            <p className="text-xl sm:text-2xl text-white/80 mb-8 font-light italic">
               "Unidos se vence siempre"
-            </div>
+            </p>
+
+            {/* Stats Row */}
+            {(ourPosition || ourPoints) && (
+              <div className="flex items-center justify-center space-x-8 mb-8">
+                {ourPosition && (
+                  <div className="text-center">
+                    <div className="text-3xl sm:text-4xl font-bold text-primary-300">{ourPosition}º</div>
+                    <div className="text-sm text-white/60">Posición</div>
+                  </div>
+                )}
+                <div className="w-px h-12 bg-white/20" />
+                {ourPoints && (
+                  <div className="text-center">
+                    <div className="text-3xl sm:text-4xl font-bold text-primary-300">{ourPoints}</div>
+                    <div className="text-sm text-white/60">Puntos</div>
+                  </div>
+                )}
+                <div className="w-px h-12 bg-white/20" />
+                <div className="text-center">
+                  <div className="text-3xl sm:text-4xl font-bold text-primary-300">103</div>
+                  <div className="text-sm text-white/60">Años</div>
+                </div>
+              </div>
+            )}
+
+            {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/entradas"
-                className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-4 rounded-lg font-semibold transition-colors inline-flex items-center justify-center"
+                className="bg-white text-primary-600 px-8 py-4 rounded-lg font-bold transition-all transform hover:scale-105 hover:shadow-xl inline-flex items-center justify-center"
               >
+                <Ticket className="mr-2 w-5 h-5" />
                 Comprar Entradas
-                <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
               <Link
                 to="/hazte-socio"
-                className="bg-transparent border-2 border-white hover:bg-white hover:text-primary-600 text-white px-8 py-4 rounded-lg font-semibold transition-colors inline-flex items-center justify-center"
+                className="bg-transparent border-2 border-white hover:bg-white hover:text-primary-600 text-white px-8 py-4 rounded-lg font-bold transition-all inline-flex items-center justify-center"
               >
+                <Heart className="mr-2 w-5 h-5" />
                 Hazte Socio
-                <Heart className="ml-2 w-5 h-5" />
               </Link>
             </div>
           </motion.div>
         </div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        >
+          <div className="w-6 h-10 border-2 border-white/40 rounded-full flex justify-center pt-2">
+            <div className="w-1 h-3 bg-white/60 rounded-full" />
+          </div>
+        </motion.div>
       </section>
 
-      {/* Latest News Carousel - Moved up */}
-      <section className="py-12 bg-gradient-to-r from-primary-50 to-secondary-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl sm:text-4xl font-bold text-secondary-900 mb-4">
-              Últimas Noticias
-            </h2>
-            <p className="text-xl text-secondary-600">
-              Mantente al día con toda la actualidad del club
-            </p>
-            {!loadingInstagram && instagramNews.length > 0 && (
-              <div className="flex items-center justify-center text-sm text-secondary-500 mt-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                Actualizadas desde <a 
-                  href={INSTAGRAM_PROFILE.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-pink-600 hover:text-pink-700 font-medium"
-                >
-                  {INSTAGRAM_PROFILE.displayName}
-                </a>
-              </div>
-            )}
-          </div>
-
-          {loadingInstagram ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-              <span className="ml-4 text-secondary-600">Cargando noticias...</span>
-            </div>
-          ) : (
-            <NewsCarousel news={instagramNews.length > 0 ? instagramNews : news} />
-          )}
+      {/* Quick Links Bar */}
+      <section className="bg-white shadow-md -mt-8 relative z-20 mx-4 sm:mx-8 lg:mx-auto lg:max-w-5xl rounded-xl overflow-hidden">
+        <div className="grid grid-cols-2 sm:grid-cols-4">
+          {quickLinks.map((link, index) => {
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.name}
+                to={link.path}
+                className={`${link.color} text-white p-4 sm:p-6 text-center transition-all hover:opacity-90 ${
+                  index < quickLinks.length - 1 ? 'border-r border-white/10' : ''
+                }`}
+              >
+                <Icon className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2" />
+                <span className="text-sm sm:text-base font-semibold">{link.name}</span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Next Match Countdown */}
+      {nextMatch && (
+        <NextMatchCountdown
+          match={{
+            id: nextMatch.id,
+            opponent: nextMatch.opponent,
+            date: nextMatch.date,
+            time: nextMatch.time,
+            venue: nextMatch.venue,
+            competition: nextMatch.competition,
+            isHome: nextMatch.isHome
+          }}
+        />
+      )}
+
+      {/* Main Content Grid */}
+      <section className="py-12 sm:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* News Section - Takes 2 columns */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Featured News Carousel */}
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div className="p-4 border-b flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-secondary-900 flex items-center">
+                    <Newspaper className="w-5 h-5 text-primary-600 mr-2" />
+                    Últimas Noticias
+                  </h2>
+                  <Link
+                    to="/noticias"
+                    className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center"
+                  >
+                    Ver todas <ArrowRight className="w-4 h-4 ml-1" />
+                  </Link>
+                </div>
+
+                {loadingNews ? (
+                  <div className="h-80 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+                  </div>
+                ) : news.length > 0 ? (
+                  <div className="relative">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={currentNewsIndex}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="relative"
+                      >
+                        <div className="aspect-video relative">
+                          <img
+                            src={news[currentNewsIndex]?.image}
+                            alt={news[currentNewsIndex]?.title}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                          <div className="absolute bottom-0 left-0 right-0 p-6">
+                            <span className="inline-block px-3 py-1 bg-primary-600 text-white text-xs font-semibold rounded-full mb-3">
+                              {news[currentNewsIndex]?.category === 'partidos' ? '⚽ Partidos' :
+                               news[currentNewsIndex]?.category === 'fotos' ? '📸 Galería' : '🏆 Club'}
+                            </span>
+                            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 line-clamp-2">
+                              {news[currentNewsIndex]?.title}
+                            </h3>
+                            <p className="text-white/80 text-sm line-clamp-2 mb-4">
+                              {news[currentNewsIndex]?.summary}
+                            </p>
+                            {news[currentNewsIndex]?.instagramUrl ? (
+                              <a
+                                href={news[currentNewsIndex].instagramUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center text-white font-semibold hover:text-primary-300 transition-colors"
+                              >
+                                <Instagram className="w-4 h-4 mr-2" />
+                                Ver en Instagram
+                                <ArrowRight className="w-4 h-4 ml-2" />
+                              </a>
+                            ) : (
+                              <Link
+                                to="/noticias"
+                                className="inline-flex items-center text-white font-semibold hover:text-primary-300 transition-colors"
+                              >
+                                Leer más
+                                <ArrowRight className="w-4 h-4 ml-2" />
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    </AnimatePresence>
+
+                    {/* Navigation */}
+                    {news.length > 1 && (
+                      <>
+                        <button
+                          onClick={() => setCurrentNewsIndex(prev => (prev - 1 + news.length) % news.length)}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg transition-all"
+                        >
+                          <ChevronLeft className="w-5 h-5 text-secondary-700" />
+                        </button>
+                        <button
+                          onClick={() => setCurrentNewsIndex(prev => (prev + 1) % news.length)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg transition-all"
+                        >
+                          <ChevronRight className="w-5 h-5 text-secondary-700" />
+                        </button>
+
+                        {/* Dots */}
+                        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex space-x-2">
+                          {news.map((_, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => setCurrentNewsIndex(idx)}
+                              className={`w-2 h-2 rounded-full transition-all ${
+                                idx === currentNewsIndex ? 'bg-white w-6' : 'bg-white/50'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-secondary-500">
+                    No hay noticias disponibles
+                  </div>
+                )}
+              </div>
+
+              {/* Upcoming Matches */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-secondary-900 flex items-center">
+                    <Calendar className="w-5 h-5 text-primary-600 mr-2" />
+                    Próximos Partidos
+                  </h2>
+                  <Link
+                    to="/calendario"
+                    className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center"
+                  >
+                    Ver calendario <ArrowRight className="w-4 h-4 ml-1" />
+                  </Link>
+                </div>
+
+                <div className="space-y-4">
+                  {upcomingMatches.length > 0 ? (
+                    upcomingMatches.map(match => (
+                      <MatchCard 
+                        key={match.id} 
+                        match={{
+                          id: match.id,
+                          opponent: match.opponent,
+                          date: match.date,
+                          time: match.time,
+                          venue: match.venue,
+                          competition: match.competition,
+                          isHome: match.isHome
+                        }} 
+                        variant="compact" 
+                      />
+                    ))
+                  ) : (
+                    <p className="text-center text-secondary-500 py-8">
+                      No hay partidos programados
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Recent Results */}
+              {recentResults.length > 0 && (
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold text-secondary-900 flex items-center">
+                      <Trophy className="w-5 h-5 text-yellow-500 mr-2" />
+                      Últimos Resultados
+                    </h2>
+                  </div>
+
+                  <div className="space-y-4">
+                    {recentResults.map(match => (
+                      <MatchCard 
+                        key={match.id} 
+                        match={{
+                          id: match.id,
+                          opponent: match.opponent,
+                          date: match.date,
+                          time: match.time,
+                          venue: match.venue,
+                          competition: match.competition,
+                          isHome: match.isHome,
+                          result: match.result
+                        }} 
+                        variant="compact"
+                        showTicketButton={false}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-8">
+              {/* Standings Widget */}
+              <StandingsWidget showCount={6} />
+
+              {/* Instagram Feed */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <SocialFeed limit={6} layout="grid" />
+              </div>
+
+              {/* Become a Member CTA */}
+              <div className="bg-gradient-to-br from-primary-600 to-primary-800 rounded-xl shadow-lg p-6 text-white">
+                <h3 className="text-xl font-bold mb-3">¡Hazte Socio!</h3>
+                <p className="text-primary-100 mb-6 text-sm">
+                  Únete a más de 1,250 socios que apoyan al club en cada partido
+                </p>
+                <ul className="space-y-2 mb-6">
+                  <li className="flex items-center text-sm">
+                    <span className="w-2 h-2 bg-primary-300 rounded-full mr-3" />
+                    Entrada gratuita a partidos locales
+                  </li>
+                  <li className="flex items-center text-sm">
+                    <span className="w-2 h-2 bg-primary-300 rounded-full mr-3" />
+                    Descuentos en la tienda oficial
+                  </li>
+                  <li className="flex items-center text-sm">
+                    <span className="w-2 h-2 bg-primary-300 rounded-full mr-3" />
+                    Contenido exclusivo
+                  </li>
+                </ul>
+                <Link
+                  to="/hazte-socio"
+                  className="block w-full bg-white text-primary-600 text-center py-3 rounded-lg font-bold hover:bg-gray-100 transition-colors"
+                >
+                  Más Información
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Banner */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
@@ -190,10 +484,11 @@ const Home: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
+                  viewport={{ once: true }}
                   className="text-center"
                 >
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
-                    <Icon className="w-8 h-8 text-primary-600" />
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                    <Icon className={`w-8 h-8 ${stat.color}`} />
                   </div>
                   <div className="text-3xl sm:text-4xl font-bold text-secondary-900 mb-2">
                     {stat.value}
@@ -208,204 +503,42 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Latest News Grid */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-secondary-900 mb-4">
-              Todas las Noticias
-            </h2>
-          </div>
-
-          {loadingInstagram ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-lg shadow-sm p-4 animate-pulse">
-                  <div className="flex space-x-4">
-                    <div className="w-20 h-20 bg-gray-200 rounded-lg"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-3 bg-gray-200 rounded w-full"></div>
-                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {news.map((article, index) => (
-                <motion.article
-                  key={article.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
-                >
-                  <div className="aspect-w-16 aspect-h-9">
-                    <img
-                      src={article.image}
-                      alt={article.title}
-                      className="w-full h-48 object-cover"
-                    />
-                  </div>
-                  <div className="p-6">
-                    <div className="text-sm text-secondary-500 mb-2">
-                      {new Date(article.date).toLocaleDateString('es-ES')}
-                      {article.author && ` • ${article.author}`}
-                    </div>
-                    <h3 className="text-xl font-bold text-secondary-900 mb-3 line-clamp-2">
-                      {article.title}
-                    </h3>
-                    <p className="text-secondary-600 mb-4 line-clamp-3">
-                      {article.summary}
-                    </p>
-                    {(article.views || article.comments) && (
-                      <div className="flex items-center space-x-4 mt-2 text-xs text-secondary-500">
-                        {article.views && <span>👁 {article.views}</span>}
-                        {article.comments && <span>💬 {article.comments}</span>}
-                      </div>
-                    )}
-                    {article.instagramUrl ? (
-                      <a
-                        href={article.instagramUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-pink-600 hover:text-pink-700 font-semibold inline-flex items-center"
-                      >
-                        Ver en Instagram
-                        <ArrowRight className="ml-2 w-4 h-4" />
-                      </a>
-                    ) : (
-                      <button className="text-primary-600 hover:text-primary-700 font-semibold inline-flex items-center">
-                        Leer más
-                        <ArrowRight className="ml-2 w-4 h-4" />
-                      </button>
-                    )}
-                    
-                    {/* Link to main Instagram profile */}
-                    {instagramNews.length === 0 && (
-                      <div className="mt-4">
-                        <a
-                          href={INSTAGRAM_PROFILE.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-pink-600 hover:text-pink-700 text-sm font-medium inline-flex items-center"
-                        >
-                          Ver en Instagram {INSTAGRAM_PROFILE.displayName}
-                          <ArrowRight className="ml-2 w-4 h-4" />
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </motion.article>
-              ))}
-            </div>
-          )}
-
-          <div className="text-center mt-8">
-            <Link
-              to="/noticias"
-              className="inline-flex items-center text-primary-600 hover:text-primary-700 font-semibold"
-            >
-              Ver todas las noticias
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Link>
-          </div>
+      {/* Full CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-primary-700 via-primary-600 to-secondary-700 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E")`,
+          }} />
         </div>
-      </section>
-
-      {/* Upcoming Matches */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-secondary-900 mb-4">
-              Próximos Partidos
-            </h2>
-            <p className="text-xl text-secondary-600">
-              No te pierdas ningún encuentro en La Planchada
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {upcomingMatches.map((match, index) => (
-              <motion.div
-                key={match.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow"
-              >
-                <div className="text-center">
-                  <div className="text-sm text-primary-600 font-semibold mb-2">
-                    {match.competition}
-                  </div>
-                  <div className="text-2xl font-bold text-secondary-900 mb-4">
-                    UCA vs {match.opponent}
-                  </div>
-                  <div className="space-y-2 text-secondary-600 mb-6">
-                    <div className="flex items-center justify-center space-x-2">
-                      <Calendar className="w-4 h-4" />
-                      <span>{new Date(match.date).toLocaleDateString('es-ES', {
-                        weekday: 'long',
-                         year: 'numeric',
-                         month: 'long',
-                         day: 'numeric'
-                       })}</span>
-                    </div>
-                  </div>
-                  <Link
-                    to="/entradas"
-                    className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors inline-block"
-                  >
-                    Comprar Entradas
-                  </Link>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="text-center mt-8">
-            <Link
-              to="/calendario"
-              className="inline-flex items-center text-primary-600 hover:text-primary-700 font-semibold"
-            >
-              Ver calendario completo
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-16 bg-primary-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
           >
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
               ¿Listo para formar parte de la familia?
             </h2>
-            <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
+            <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto">
               Únete a más de 1,250 socios que apoyan al S.D. Unión Club de Astillero 
               en cada partido y en cada momento
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/hazte-socio"
-                className="bg-white hover:bg-gray-100 text-primary-600 px-8 py-4 rounded-lg font-semibold transition-colors inline-flex items-center justify-center"
+                className="bg-white hover:bg-gray-100 text-primary-600 px-10 py-4 rounded-lg font-bold transition-all transform hover:scale-105 shadow-xl inline-flex items-center justify-center"
               >
+                <Users className="mr-2 w-5 h-5" />
                 Hazte Socio
-                <Users className="ml-2 w-5 h-5" />
               </Link>
               <Link
                 to="/tienda"
-                className="bg-transparent border-2 border-white hover:bg-white hover:text-primary-600 text-white px-8 py-4 rounded-lg font-semibold transition-colors inline-flex items-center justify-center"
+                className="bg-transparent border-2 border-white hover:bg-white hover:text-primary-600 text-white px-10 py-4 rounded-lg font-bold transition-all inline-flex items-center justify-center"
               >
+                <ShoppingBag className="mr-2 w-5 h-5" />
                 Visita la Tienda
-                <Target className="ml-2 w-5 h-5" />
               </Link>
             </div>
           </motion.div>
@@ -415,178 +548,4 @@ const Home: React.FC = () => {
   );
 };
 
-// News Carousel Component
-interface NewsCarouselProps {
-  news: any[];
-}
-
-const NewsCarousel: React.FC<NewsCarouselProps> = ({ news }) => {
-  const [currentIndex, setCurrentIndex] = React.useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = React.useState(true);
-
-  // Auto-advance carousel
-  React.useEffect(() => {
-    if (!isAutoPlaying || news.length <= 1) return;
-    
-    const interval = setInterval(() => {
-      setCurrentIndex(prev => (prev + 1) % news.length);
-    }, 4000); // Change every 4 seconds
-
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, news.length]);
-
-  const goToSlide = (index: number) => {
-    setCurrentIndex(index);
-    setIsAutoPlaying(false);
-    // Resume auto-play after 10 seconds
-    setTimeout(() => setIsAutoPlaying(true), 10000);
-  };
-
-  const nextSlide = () => {
-    setCurrentIndex(prev => (prev + 1) % news.length);
-    setIsAutoPlaying(false);
-    setTimeout(() => setIsAutoPlaying(true), 10000);
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex(prev => (prev - 1 + news.length) % news.length);
-    setIsAutoPlaying(false);
-    setTimeout(() => setIsAutoPlaying(true), 10000);
-  };
-
-  if (news.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-secondary-600">No hay noticias disponibles</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative max-w-6xl mx-auto">
-      {/* Main Carousel */}
-      <div className="relative overflow-hidden rounded-xl shadow-2xl bg-white">
-        <div 
-          className="flex transition-transform duration-500 ease-in-out"
-          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-        >
-          {news.map((article, index) => (
-            <div key={article.id} className="w-full flex-shrink-0">
-              <div className="lg:flex lg:h-96">
-                {/* Image */}
-                <div className="lg:w-1/2">
-                  <img
-                    src={article.image}
-                    alt={article.title}
-                    className="w-full h-64 lg:h-full object-cover"
-                  />
-                  {article.instagramUrl && (
-                    <div className="absolute top-4 right-4 bg-pink-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                      Instagram
-                    </div>
-                  )}
-                </div>
-                
-                {/* Content */}
-                <div className="lg:w-1/2 p-8 flex flex-col justify-center">
-                  <div className="flex items-center mb-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      article.category === 'partidos' ? 'bg-primary-100 text-primary-600' :
-                      article.category === 'fotos' ? 'bg-secondary-100 text-secondary-600' :
-                      'bg-accent-100 text-accent-600'
-                    }`}>
-                      {article.category === 'partidos' ? '⚽ Partidos' :
-                       article.category === 'fotos' ? '📸 Galería' :
-                       '🏆 Club'}
-                    </span>
-                    <span className="text-sm text-secondary-500 ml-3">
-                      {new Date(article.date).toLocaleDateString('es-ES')}
-                    </span>
-                  </div>
-                  
-                  <h3 className="text-2xl lg:text-3xl font-bold text-secondary-900 mb-4 line-clamp-2">
-                    {article.title}
-                  </h3>
-                  
-                  <p className="text-secondary-600 mb-6 line-clamp-3 text-lg leading-relaxed">
-                    {article.summary}
-                  </p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4 text-sm text-secondary-500">
-                      {article.views && <span>👁 {article.views}</span>}
-                      {article.comments && <span>💬 {article.comments}</span>}
-                    </div>
-                    
-                    {article.instagramUrl ? (
-                      <a
-                        href={article.instagramUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors inline-flex items-center"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Ver en Instagram
-                        <ArrowRight className="ml-2 w-4 h-4" />
-                      </a>
-                    ) : (
-                      <Link
-                        to="/noticias"
-                        className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors inline-flex items-center"
-                      >
-                        Leer más
-                        <ArrowRight className="ml-2 w-4 h-4" />
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Navigation Arrows */}
-      <button
-        onClick={prevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white hover:bg-gray-100 text-secondary-800 p-3 rounded-full shadow-lg transition-colors z-10"
-      >
-        <ArrowRight className="w-6 h-6 transform rotate-180" />
-      </button>
-      
-      <button
-        onClick={nextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white hover:bg-gray-100 text-secondary-800 p-3 rounded-full shadow-lg transition-colors z-10"
-      >
-        <ArrowRight className="w-6 h-6" />
-      </button>
-
-      {/* Indicators */}
-      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex space-x-2">
-        {news.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              index === currentIndex 
-                ? 'bg-primary-600 scale-125' 
-                : 'bg-gray-300 hover:bg-gray-400'
-            }`}
-          />
-        ))}
-      </div>
-
-      {/* Auto-play indicator */}
-      <div className="absolute top-4 left-4 z-10">
-        <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-          isAutoPlaying 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-gray-100 text-gray-600'
-        }`}>
-          {isAutoPlaying ? '▶ Auto' : '⏸ Pausado'}
-        </div>
-      </div>
-    </div>
-  );
-};
 export default Home;

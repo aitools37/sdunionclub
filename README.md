@@ -1,91 +1,180 @@
-sdunionclub
+# S.D. Unión Club de Astillero - Web Oficial
 
-## 🔧 Configuración de Parse.bot para Clasificación
+Página web oficial del S.D. Unión Club de Astillero, club de fútbol fundado en 1922.
 
-### Datos necesarios a extraer de la tabla de la RFCF:
+![S.D. Unión Club de Astillero](https://upload.wikimedia.org/wikipedia/en/0/01/Uni%C3%B3n_Club_Astillero.png)
 
-La URL objetivo es: `https://www.rfcf.es/pnfg/NPcd/NFG_VisClasificacion?cod_primaria=1000120&codcompeticion=7986463&codgrupo=7986502`
+## 🚀 Tecnologías
 
-### Estructura de la tabla HTML a extraer:
+- **Frontend:** React 18 + TypeScript + Vite
+- **Estilos:** Tailwind CSS
+- **Animaciones:** Framer Motion
+- **Backend:** Supabase (Auth, DB, Edge Functions)
+- **Scraping:** Parse.bot API para datos de RFCF
+- **Hosting:** Netlify
 
-```html
-<table>
-  <thead>
-    <tr>
-      <th>Pos</th>
-      <th>Equipo</th>
-      <th>Pts</th>
-      <th>PJ</th>
-      <th>G</th>
-      <th>E</th>
-      <th>P</th>
-      <th>GF</th>
-      <th>GC</th>
-      <th>Dif</th>
-      <th>Últimos 5</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td><a href="enlace">Nombre del Equipo</a></td>
-      <td>52</td>
-      <td>22</td>
-      <td>16</td>
-      <td>4</td>
-      <td>2</td>
-      <td>58</td>
-      <td>18</td>
-      <td>+40</td>
-      <td>GGEGGG</td>
-    </tr>
-  </tbody>
-</table>
-```
+## 📋 Características
 
-### Configuración del scraper en Parse.bot:
+### Implementadas
+- ✅ Página principal con diseño moderno estilo grandes clubes
+- ✅ Cuenta atrás para el próximo partido
+- ✅ Clasificación en tiempo real desde RFCF
+- ✅ Calendario de partidos con vista lista y mes
+- ✅ Sistema de noticias conectado a Instagram
+- ✅ Tienda online con carrito
+- ✅ Sistema de socios
+- ✅ Venta de entradas
+- ✅ Páginas de equipos (Primer Equipo, Marismas, Escuelas)
+- ✅ Información del estadio La Planchada
+- ✅ Responsive design para móviles
 
-1. **Selector de tabla**: `table` o más específico si hay múltiples tablas
-2. **Selector de filas**: `tbody tr`
-3. **Campos a extraer por fila**:
-   - `position`: Primera celda `td:nth-child(1)`
-   - `team`: Texto de la segunda celda `td:nth-child(2)`
-   - `link`: Atributo href del enlace en la segunda celda `td:nth-child(2) a`
-   - `points`: Tercera celda `td:nth-child(3)`
-   - `played`: Cuarta celda `td:nth-child(4)`
-   - `won`: Quinta celda `td:nth-child(5)`
-   - `drawn`: Sexta celda `td:nth-child(6)`
-   - `lost`: Séptima celda `td:nth-child(7)`
-   - `goalsFor`: Octava celda `td:nth-child(8)`
-   - `goalsAgainst`: Novena celda `td:nth-child(9)`
-   - `goalDifference`: Décima celda `td:nth-child(10)`
-   - `form`: Undécima celda `td:nth-child(11)` (últimos 5 resultados como "GGEGP")
+### En desarrollo
+- 🔄 Integración real con Instagram API
+- 🔄 Integración con canal de WhatsApp
+- 🔄 Notificaciones push para partidos
+- 🔄 Panel de administración
 
-### Ejemplo de configuración JSON para Parse.bot:
+## 🛠️ Configuración
 
-```json
-{
-  "url": "https://www.rfcf.es/pnfg/NPcd/NFG_VisClasificacion?cod_primaria=1000120&codcompeticion=7986463&codgrupo=7986502",
-  "selector": "tbody tr",
-  "fields": {
-    "position": "td:nth-child(1)",
-    "team": "td:nth-child(2)",
-    "link": "td:nth-child(2) a@href",
-    "points": "td:nth-child(3)",
-    "played": "td:nth-child(4)",
-    "won": "td:nth-child(5)",
-    "drawn": "td:nth-child(6)",
-    "lost": "td:nth-child(7)",
-    "goalsFor": "td:nth-child(8)",
-    "goalsAgainst": "td:nth-child(9)",
-    "goalDifference": "td:nth-child(10)",
-    "form": "td:nth-child(11)"
-  }
-}
-```
+### Variables de entorno
 
-### Variables de entorno necesarias:
+Crea un archivo `.env` en la raíz del proyecto:
 
 ```env
-REACT_APP_PARSEBOT_API_KEY=tu_api_key_de_parsebot
+# Supabase
+VITE_SUPABASE_URL=tu_supabase_url
+VITE_SUPABASE_ANON_KEY=tu_supabase_anon_key
+
+# Parse.bot (para scraping RFCF)
+PARSEBOT_API_KEY=tu_api_key
 ```
+
+### Configuración de Supabase
+
+1. Crea un proyecto en [Supabase](https://supabase.com)
+2. Ejecuta las migraciones en `supabase/migrations/`
+3. Configura los secrets en Edge Functions:
+   - `PARSEBOT_API_KEY`: API key de Parse.bot
+
+### Parse.bot Setup
+
+Para el scraping de clasificación y calendario:
+
+1. Crea una cuenta en [Parse.bot](https://parse.bot)
+2. Configura un scraper para la URL de clasificación RFCF:
+   ```
+   https://www.rfcf.es/pnfg/NPcd/NFG_VisClasificacion?cod_primaria=1000120&codcompeticion=XXXXX&codgrupo=XXXXX
+   ```
+3. Guarda el API key en las variables de entorno
+
+## 📦 Instalación
+
+```bash
+# Clonar repositorio
+git clone https://github.com/aitools37/sdunionclub.git
+cd sdunionclub
+
+# Instalar dependencias
+npm install
+
+# Iniciar servidor de desarrollo
+npm run dev
+
+# Construir para producción
+npm run build
+```
+
+## 📁 Estructura del Proyecto
+
+```
+sdunionclub/
+├── public/                 # Archivos estáticos
+├── src/
+│   ├── components/         # Componentes React reutilizables
+│   │   ├── Footer.tsx
+│   │   ├── Header.tsx
+│   │   ├── MatchCard.tsx
+│   │   ├── NextMatchCountdown.tsx
+│   │   ├── SocialFeed.tsx
+│   │   ├── StandingsWidget.tsx
+│   │   └── ...
+│   ├── pages/              # Páginas de la aplicación
+│   │   ├── Home.tsx
+│   │   ├── Calendar.tsx
+│   │   ├── Classification.tsx
+│   │   └── ...
+│   ├── services/           # Servicios y APIs
+│   │   ├── calendarService.ts
+│   │   ├── classificationService.ts
+│   │   └── instagramService.ts
+│   ├── stores/             # Estado global (Zustand)
+│   ├── App.tsx
+│   └── main.tsx
+├── supabase/
+│   ├── functions/          # Edge Functions
+│   │   ├── scrape-rfcf-classification/
+│   │   └── scrape-rfcf-calendar/
+│   └── migrations/         # Migraciones SQL
+├── tailwind.config.js
+├── vite.config.ts
+└── package.json
+```
+
+## 🎨 Componentes Principales
+
+### NextMatchCountdown
+Muestra cuenta atrás animada para el próximo partido con información del rival.
+
+### StandingsWidget
+Widget compacto de clasificación que muestra posiciones cercanas al equipo.
+
+### MatchCard
+Tarjeta de partido reutilizable con múltiples variantes (default, compact, featured).
+
+### SocialFeed
+Feed de Instagram con grid de imágenes y overlay interactivo.
+
+## 🔧 Edge Functions
+
+### scrape-rfcf-classification
+Scrapea la clasificación de la RFCF y actualiza la base de datos.
+
+### scrape-rfcf-calendar
+Scrapea el calendario de partidos de la RFCF.
+
+## 📱 Despliegue
+
+### Netlify
+```bash
+# Build
+npm run build
+
+# El directorio dist/ se despliega automáticamente
+```
+
+### Configuración Netlify
+- Build command: `npm run build`
+- Publish directory: `dist`
+- Node version: 18+
+
+## 🤝 Contribuir
+
+1. Fork el proyecto
+2. Crea una rama (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit los cambios (`git commit -m 'Añade nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+Este proyecto es propiedad del S.D. Unión Club de Astillero.
+
+## 📞 Contacto
+
+- **Web:** [sdunionclub.com](https://sdunionclub.com)
+- **Email:** info@sdunionclub.com
+- **Instagram:** [@unionclubastillero](https://instagram.com/unionclubastillero)
+
+---
+
+Hecho con ❤️ en El Astillero
