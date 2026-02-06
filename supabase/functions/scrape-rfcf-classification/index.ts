@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
+const SIGUETULIGA_URL = 'https://www.siguetuliga.com/liga/cantabria-segunda-regional-grupo-b';
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -17,7 +19,6 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const parseBotApiKey = Deno.env.get('PARSEBOT_API_KEY');
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -31,30 +32,15 @@ Deno.serve(async (req: Request) => {
       throw new Error('No active competition found');
     }
 
-    const rfcfUrl = `https://www.rfcf.es/pnfg/NPcd/NFG_VisClasificacion?cod_primaria=1000120&codcompeticion=${competition.rfcf_competition_code}&codgrupo=${competition.rfcf_group_code}&cod_agrupacion=1`;
+    console.log('Fetching classification from siguetuliga.com...');
 
-    console.log('RFCF URL:', rfcfUrl);
-
-    let teams: any[] = [];
-
-    if (parseBotApiKey) {
-      try {
-        teams = await fetchFromParseBot(parseBotApiKey, rfcfUrl);
-        console.log('Parse.bot returned', teams.length, 'teams');
-      } catch (e) {
-        console.error('Parse.bot failed:', e);
-        console.log('Falling back to direct RFCF scrape...');
-      }
-    }
+    const teams = await scrapeSigueTuLiga();
 
     if (teams.length === 0) {
-      teams = await scrapeRFCFDirectly(rfcfUrl);
-      console.log('Direct scrape returned', teams.length, 'teams');
+      throw new Error('Could not retrieve classification data');
     }
 
-    if (teams.length === 0) {
-      throw new Error('Could not retrieve classification data from any source');
-    }
+    console.log(`Found ${teams.length} teams`);
 
     const totalTeams = teams.length;
     let processedCount = 0;
@@ -63,21 +49,20 @@ Deno.serve(async (req: Request) => {
       const t = teams[i];
 
       try {
-        const teamName = String(t.name || `Team ${i + 1}`).trim();
-        const position = parseInt(String(t.position || i + 1));
-        const points = parseInt(String(t.points || 0));
-        const played = parseInt(String(t.played || 0));
-        const won = parseInt(String(t.won || 0));
-        const drawn = parseInt(String(t.drawn || 0));
-        const lost = parseInt(String(t.lost || 0));
-        const goalsFor = parseInt(String(t.goalsFor || 0));
-        const goalsAgainst = parseInt(String(t.goalsAgainst || 0));
+        const teamName = String(t.name).trim();
+        const position = t.position;
+        const points = t.points;
+        const played = t.played;
+        const won = t.won;
+        const drawn = t.drawn;
+        const lost = t.lost;
+        const goalsFor = t.goalsFor;
+        const goalsAgainst = t.goalsAgainst;
         const goalDifference = goalsFor - goalsAgainst;
-        const form = String(t.form || '');
 
-        console.log(`  ${position}. ${teamName} - ${points} pts`);
+        console.log(`  ${position}. ${teamName} - ${points} pts (${played}J ${won}G ${drawn}E ${lost}P)`);
 
-        const isOurTeam = teamName.toLowerCase().includes('union');
+        const isOurTeam = teamName.toLowerCase().includes('uni') && teamName.toLowerCase().includes('club');
 
         const { data: teamData, error: teamError } = await supabase
           .from('teams')
@@ -115,7 +100,7 @@ Deno.serve(async (req: Request) => {
             goals_for: goalsFor,
             goals_against: goalsAgainst,
             goal_difference: goalDifference,
-            form,
+            form: '',
             is_promoted: isPromoted,
             is_playoff: isPlayoff,
             is_relegated: isRelegated,
@@ -162,68 +147,8 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-async function fetchFromParseBot(apiKey: string, rfcfUrl: string): Promise<any[]> {
-  const parseBotUrl = 'https://api.parse.bot/scraper/60aee77f-422f-429b-ba22-26756d847d81/run';
-
-  const response = await fetch(parseBotUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-API-Key': apiKey,
-    },
-    body: JSON.stringify({ url: rfcfUrl, count: 1 }),
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Parse.bot ${response.status}: ${errText}`);
-  }
-
-  const data = await response.json();
-  console.log('Parse.bot raw response keys:', Object.keys(data));
-
-  let rawTeams: any[] = [];
-
-  if (data.data?.teams && Array.isArray(data.data.teams)) {
-    rawTeams = data.data.teams;
-  } else if (data.results && Array.isArray(data.results)) {
-    rawTeams = data.results;
-  } else if (Array.isArray(data.data)) {
-    rawTeams = data.data;
-  } else if (Array.isArray(data)) {
-    rawTeams = data;
-  } else {
-    for (const key of Object.keys(data)) {
-      if (Array.isArray(data[key]) && data[key].length > 3) {
-        rawTeams = data[key];
-        break;
-      }
-    }
-  }
-
-  if (rawTeams.length === 0) return [];
-
-  console.log('Parse.bot first team sample:', JSON.stringify(rawTeams[0]));
-
-  const mapping = detectFieldMapping(rawTeams[0]);
-  return rawTeams.map((t: any, i: number) => ({
-    position: t[mapping.position] || i + 1,
-    name: t[mapping.name] || `Team ${i + 1}`,
-    points: t[mapping.points] || 0,
-    played: t[mapping.played] || 0,
-    won: t[mapping.won] || 0,
-    drawn: t[mapping.drawn] || 0,
-    lost: t[mapping.lost] || 0,
-    goalsFor: t[mapping.goalsFor] || 0,
-    goalsAgainst: t[mapping.goalsAgainst] || 0,
-    form: t[mapping.form] || '',
-  }));
-}
-
-async function scrapeRFCFDirectly(rfcfUrl: string): Promise<any[]> {
-  console.log('Fetching RFCF page directly...');
-
-  const response = await fetch(rfcfUrl, {
+async function scrapeSigueTuLiga(): Promise<any[]> {
+  const response = await fetch(SIGUETULIGA_URL, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -232,107 +157,91 @@ async function scrapeRFCFDirectly(rfcfUrl: string): Promise<any[]> {
   });
 
   if (!response.ok) {
-    throw new Error(`RFCF returned ${response.status}`);
+    throw new Error(`siguetuliga.com returned ${response.status}`);
   }
 
   const html = await response.text();
-  console.log('RFCF page size:', html.length, 'bytes');
+  console.log('Page size:', html.length, 'bytes');
 
-  return parseRFCFClassificationHTML(html);
+  return parseSigueTuLigaHTML(html);
 }
 
-function parseRFCFClassificationHTML(html: string): any[] {
+function parseSigueTuLigaHTML(html: string): any[] {
   const teams: any[] = [];
 
-  const tableMatch = html.match(/<table[^>]*class="[^"]*tabla_resultados[^"]*"[^>]*>([\s\S]*?)<\/table>/i)
-    || html.match(/<table[^>]*id="[^"]*clasif[^"]*"[^>]*>([\s\S]*?)<\/table>/i)
-    || html.match(/<table[^>]*>([\s\S]*?)<\/table>/gi);
+  const tableRegex = /<table[^>]*>([\s\S]*?)<\/table>/gi;
+  const tables = html.match(tableRegex);
 
-  if (!tableMatch) {
-    console.log('No classification table found in HTML');
-    const snippet = html.substring(0, 2000);
-    console.log('HTML start:', snippet);
+  if (!tables) {
+    console.log('No tables found');
     return [];
   }
 
-  const tableHtml = Array.isArray(tableMatch) ? findClassificationTable(tableMatch) : tableMatch[1];
-  if (!tableHtml) return [];
-
-  const rows = tableHtml.match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi) || [];
-  console.log('Found', rows.length, 'rows in table');
-
-  let dataRowStart = 0;
-  for (let i = 0; i < rows.length; i++) {
-    if (rows[i].includes('<th')) {
-      dataRowStart = i + 1;
+  let classTable = '';
+  for (const table of tables) {
+    if (table.includes('Equipo') && table.includes('GF') && table.includes('GC')) {
+      classTable = table;
+      break;
     }
   }
 
-  for (let i = dataRowStart; i < rows.length; i++) {
-    const row = rows[i];
-    const cells = (row.match(/<td[^>]*>([\s\S]*?)<\/td>/gi) || []).map(
-      (cell: string) => cell.replace(/<[^>]+>/g, '').trim()
-    );
+  if (!classTable) {
+    for (const table of tables) {
+      const rowCount = (table.match(/<tr/gi) || []).length;
+      if (rowCount >= 10) {
+        classTable = table;
+        break;
+      }
+    }
+  }
 
-    if (cells.length < 8) continue;
+  if (!classTable) {
+    console.log('Classification table not found');
+    return [];
+  }
 
-    const position = parseInt(cells[0]) || (teams.length + 1);
-    const name = cells[1]?.trim();
+  const rows = classTable.match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi) || [];
+  console.log('Table rows:', rows.length);
 
-    if (!name || name === '') continue;
+  for (const row of rows) {
+    if (row.includes('<th')) continue;
+
+    const cells: string[] = [];
+    const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+    let cellMatch;
+
+    while ((cellMatch = cellRegex.exec(row)) !== null) {
+      const text = cellMatch[1].replace(/<[^>]+>/g, '').replace(/\*\*/g, '').replace(/\s+/g, ' ').trim();
+      cells.push(text);
+    }
+
+    if (cells.length < 10) continue;
+
+    const position = parseInt(cells[0]);
+    const name = cells[1].trim();
+    const points = parseInt(cells[2]);
+    const played = parseInt(cells[3]);
+    const won = parseInt(cells[4]);
+    const drawn = parseInt(cells[5]);
+    const lost = parseInt(cells[6]);
+    const goalsFor = parseInt(cells[7]);
+    const goalsAgainst = parseInt(cells[8]);
+
+    if (isNaN(position) || !name) continue;
 
     teams.push({
       position,
       name,
-      points: parseInt(cells[2]) || 0,
-      played: parseInt(cells[3]) || 0,
-      won: parseInt(cells[4]) || 0,
-      drawn: parseInt(cells[5]) || 0,
-      lost: parseInt(cells[6]) || 0,
-      goalsFor: parseInt(cells[7]) || 0,
-      goalsAgainst: parseInt(cells[8]) || 0,
-      form: '',
+      points,
+      played,
+      won,
+      drawn,
+      lost,
+      goalsFor,
+      goalsAgainst,
     });
   }
 
-  console.log('Parsed', teams.length, 'teams from RFCF HTML');
+  console.log('Parsed', teams.length, 'teams');
   return teams;
-}
-
-function findClassificationTable(tables: string[]): string | null {
-  for (const table of tables) {
-    const rowCount = (table.match(/<tr/gi) || []).length;
-    if (rowCount >= 10 && (table.includes('Equipo') || table.includes('equipo') || table.includes('Puntos') || table.includes('PJ') || table.includes('Pts'))) {
-      return table;
-    }
-  }
-  for (const table of tables) {
-    const rowCount = (table.match(/<tr/gi) || []).length;
-    if (rowCount >= 10) return table;
-  }
-  return null;
-}
-
-function detectFieldMapping(obj: any): Record<string, string> {
-  return {
-    position: findKey(obj, ['position', 'pos', 'rank', 'posicion']),
-    name: findKey(obj, ['team', 'name', 'equipo', 'club', 'teamname', 'team_name']),
-    points: findKey(obj, ['points', 'pts', 'puntos']),
-    played: findKey(obj, ['played', 'pj', 'matches', 'games', 'partidos']),
-    won: findKey(obj, ['won', 'w', 'g', 'wins', 'ganados']),
-    drawn: findKey(obj, ['drawn', 'd', 'e', 'draws', 'empates']),
-    lost: findKey(obj, ['lost', 'l', 'p', 'losses', 'perdidos']),
-    goalsFor: findKey(obj, ['goalsfor', 'gf', 'golesfavor']),
-    goalsAgainst: findKey(obj, ['goalsagainst', 'ga', 'gc', 'golescontra']),
-    form: findKey(obj, ['form', 'streak', 'racha', 'ultimos']),
-  };
-}
-
-function findKey(obj: any, possibilities: string[]): string {
-  const keys = Object.keys(obj);
-  for (const possibility of possibilities) {
-    const found = keys.find(k => k.toLowerCase().replace(/[_\s-]/g, '') === possibility.replace(/[_\s-]/g, ''));
-    if (found) return found;
-  }
-  return possibilities[0];
 }
