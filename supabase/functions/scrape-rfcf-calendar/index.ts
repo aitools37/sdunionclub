@@ -6,16 +6,29 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
+const GROUP_MAP: Record<string, string> = {
+  'Grupo A': 'grupo1',
+  'Grupo B': 'grupo2',
+  'Grupo C': 'grupo3',
+  'Grupo D': 'grupo4',
+};
+
 interface ParsedMatch {
-  matchday?: number;
+  matchday: number;
   date: string;
   time: string;
   homeTeam: string;
   awayTeam: string;
   homeScore?: number;
   awayScore?: number;
-  venue?: string;
   status: 'scheduled' | 'finished' | 'postponed';
+}
+
+const OUR_TEAM_PATTERNS = ['sd unión club', 'sd union club', 'unión club', 'union club', 's.d. unión', 's.d. union'];
+
+function isOurTeam(name: string): boolean {
+  const lower = name.toLowerCase();
+  return OUR_TEAM_PATTERNS.some(p => lower.includes(p));
 }
 
 Deno.serve(async (req: Request) => {
@@ -26,17 +39,8 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const parseBotApiKey = Deno.env.get('PARSEBOT_API_KEY');
-    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('🚀 Starting RFCF calendar scrape...');
-
-    if (!parseBotApiKey) {
-      throw new Error('PARSEBOT_API_KEY not configured');
-    }
-
-    // Get active competition
     const { data: competition, error: compError } = await supabase
       .from('competitions')
       .select('*')
@@ -47,146 +51,68 @@ Deno.serve(async (req: Request) => {
       throw new Error('No active competition found');
     }
 
-    console.log('🏆 Competition:', competition.name);
-
-    // Get our team
-    const { data: ourTeam, error: teamError } = await supabase
+    const { data: ourTeam } = await supabase
       .from('teams')
       .select('*')
       .eq('is_our_team', true)
       .maybeSingle();
 
-    if (teamError) {
-      console.warn('Could not find our team:', teamError);
-    }
+    const groupSlug = GROUP_MAP[competition.group_name] || 'grupo3';
+    const seasonYear = competition.season.split('-')[1] || '2026';
 
-    // Try to scrape calendar from RFCF
-    // The calendar URL structure is usually:
-    // https://www.rfcf.es/pnfg/NPcd/NFG_VisCalendario?cod_primaria=1000120&codcompeticion=XXXXX&codgrupo=XXXXX
-    
-    const calendarUrl = `https://www.rfcf.es/pnfg/NPcd/NFG_VisCalendario?cod_primaria=1000120&codcompeticion=${competition.rfcf_competition_code}&codgrupo=${competition.rfcf_group_code}`;
-    
-    console.log('📅 Calendar URL:', calendarUrl);
+    console.log(`Scraping calendar: ${competition.name} ${competition.group_name} ${competition.season}`);
 
-    // Since we may not have a Parse.bot scraper for calendar yet, 
-    // let's create a fallback with sample data structure
-    // In production, you would configure a Parse.bot scraper for this
+    let allMatches: ParsedMatch[] = [];
 
-    let matches: ParsedMatch[] = [];
-
-    // Try Parse.bot API if available
-    const parseBotCalendarId = Deno.env.get('PARSEBOT_CALENDAR_SCRAPER_ID');
-    
-    if (parseBotCalendarId) {
+    for (let jornada = 1; jornada <= 24; jornada++) {
       try {
-        const parseBotUrl = `https://api.parse.bot/scraper/${parseBotCalendarId}/run`;
-        
-        console.log('📡 Calling Parse.bot for calendar...');
-        
-        const parseBotResponse = await fetch(parseBotUrl, {
-          method: 'POST',
+        const url = `https://www.resultados-futbol.com/competicion/segunda_regional_cantabria/${seasonYear}/${groupSlug}/jornada${jornada}`;
+
+        const response = await fetch(url, {
           headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': parseBotApiKey,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'es-ES,es;q=0.9',
           },
-          body: JSON.stringify({ count: 1 }),
         });
 
-        if (parseBotResponse.ok) {
-          const parseBotData = await parseBotResponse.json();
-          console.log('📦 Parse.bot calendar response received');
-          
-          // Parse the response (structure depends on your scraper config)
-          if (Array.isArray(parseBotData.data)) {
-            matches = parseBotData.data.map((m: any) => ({
-              matchday: parseInt(m.jornada || m.matchday || '0'),
-              date: parseSpanishDate(m.fecha || m.date),
-              time: m.hora || m.time || '17:00',
-              homeTeam: m.local || m.homeTeam || '',
-              awayTeam: m.visitante || m.awayTeam || '',
-              homeScore: m.resultado ? parseInt(m.resultado.split('-')[0]) : undefined,
-              awayScore: m.resultado ? parseInt(m.resultado.split('-')[1]) : undefined,
-              venue: m.campo || m.venue || '',
-              status: m.resultado ? 'finished' : 'scheduled',
-            }));
-          }
+        if (!response.ok) {
+          console.log(`J${jornada}: HTTP ${response.status}`);
+          continue;
         }
-      } catch (parseError) {
-        console.warn('Parse.bot calendar scrape failed, using fallback:', parseError);
+
+        const html = await response.text();
+        const matches = parseJornadaPage(html, jornada);
+        console.log(`J${jornada}: ${matches.length} matches`);
+        allMatches.push(...matches);
+
+        await new Promise(r => setTimeout(r, 250));
+      } catch (e) {
+        console.warn(`J${jornada} error:`, e);
       }
     }
 
-    // If no matches from scraper, generate upcoming match schedule
-    if (matches.length === 0) {
-      console.log('📝 No scraper data, generating sample schedule...');
-      
-      // Generate next 5 upcoming matches
-      const opponents = [
-        'CD Laredo', 'UD Samano', 'Racing Santander B', 'SD Cayón', 
-        'CD Revilla', 'Atlético Astillero', 'CD Bezana', 'EM Santander'
-      ];
-      
-      const today = new Date();
-      
-      for (let i = 0; i < 5; i++) {
-        const matchDate = new Date(today);
-        matchDate.setDate(today.getDate() + (7 * (i + 1)));
-        
-        matches.push({
-          matchday: 20 + i,
-          date: matchDate.toISOString().split('T')[0],
-          time: i % 2 === 0 ? '17:00' : '16:30',
-          homeTeam: i % 2 === 0 ? 'S.D. Unión Club' : opponents[i],
-          awayTeam: i % 2 === 0 ? opponents[i] : 'S.D. Unión Club',
-          venue: i % 2 === 0 ? 'La Planchada' : 'Campo visitante',
-          status: 'scheduled',
-        });
-      }
+    const ourMatches = allMatches.filter(m => isOurTeam(m.homeTeam) || isOurTeam(m.awayTeam));
+    console.log(`Total: ${allMatches.length} matches, ours: ${ourMatches.length}`);
 
-      // Add some recent results
-      for (let i = 0; i < 3; i++) {
-        const matchDate = new Date(today);
-        matchDate.setDate(today.getDate() - (7 * (i + 1)));
-        
-        const ourScore = Math.floor(Math.random() * 4);
-        const theirScore = Math.floor(Math.random() * 3);
-        
-        matches.push({
-          matchday: 19 - i,
-          date: matchDate.toISOString().split('T')[0],
-          time: '17:00',
-          homeTeam: i % 2 === 0 ? 'S.D. Unión Club' : opponents[5 + i] || 'Rival',
-          awayTeam: i % 2 === 0 ? opponents[5 + i] || 'Rival' : 'S.D. Unión Club',
-          homeScore: i % 2 === 0 ? ourScore : theirScore,
-          awayScore: i % 2 === 0 ? theirScore : ourScore,
-          venue: i % 2 === 0 ? 'La Planchada' : 'Campo visitante',
-          status: 'finished',
-        });
-      }
-    }
-
-    console.log(`📊 Processing ${matches.length} matches...`);
-
+    const matchesToSave = ourMatches.length > 0 ? ourMatches : allMatches;
     let processedCount = 0;
 
-    for (const match of matches) {
+    for (const match of matchesToSave) {
       try {
-        // Determine if we're home or away
-        const isOurHome = match.homeTeam.toLowerCase().includes('union') || 
-                          match.homeTeam.toLowerCase().includes('s.d. unión');
-        const opponent = isOurHome ? match.awayTeam : match.homeTeam;
-        
-        // Upsert match
+        const ourHome = isOurTeam(match.homeTeam);
+        const opponent = ourHome ? match.awayTeam : match.homeTeam;
+
         const { error: matchError } = await supabase
           .from('matches')
           .upsert({
             competition_id: competition.id,
             team_id: ourTeam?.id || null,
-            opponent: opponent,
+            opponent: opponent.trim(),
             match_date: match.date,
             match_time: match.time,
-            venue: match.venue || (isOurHome ? 'La Planchada' : 'Campo visitante'),
-            is_home: isOurHome,
+            venue: ourHome ? 'La Planchada' : 'Campo visitante',
+            is_home: ourHome,
             home_score: match.homeScore,
             away_score: match.awayScore,
             status: match.status,
@@ -198,58 +124,80 @@ Deno.serve(async (req: Request) => {
           });
 
         if (matchError) {
-          console.error(`  ❌ Error upserting match vs ${opponent}:`, matchError);
+          console.error(`Error: ${opponent}:`, matchError);
         } else {
           processedCount++;
-          console.log(`  ✅ ${match.date}: vs ${opponent} ${match.status === 'finished' ? `(${match.homeScore}-${match.awayScore})` : ''}`);
         }
-      } catch (matchErr) {
-        console.error('  ❌ Error processing match:', matchErr);
+      } catch (e) {
+        console.error('Match error:', e);
       }
     }
 
-    console.log(`✅ Calendar updated: ${processedCount}/${matches.length} matches`);
+    console.log(`Done: ${processedCount}/${matchesToSave.length} matches saved`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Calendar data updated',
+        message: `Calendario actualizado: ${processedCount} partidos`,
         matches: processedCount,
-        total: matches.length,
-        timestamp: new Date().toISOString(),
+        total: matchesToSave.length,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-
   } catch (error) {
-    console.error('❌ Error:', error);
+    console.error('Error:', error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }),
+      JSON.stringify({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
 
-// Helper to parse Spanish date formats (e.g., "15/03/2026" or "15 Mar 2026")
-function parseSpanishDate(dateStr: string): string {
-  if (!dateStr) return new Date().toISOString().split('T')[0];
-  
-  // Try DD/MM/YYYY
-  const slashMatch = dateStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if (slashMatch) {
-    const [, day, month, year] = slashMatch;
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+function parseJornadaPage(html: string, matchday: number): ParsedMatch[] {
+  const matches: ParsedMatch[] = [];
+
+  const rows = html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
+
+  for (const row of rows) {
+    const links = row.match(/<a[^>]*>([^<]+)<\/a>/gi) || [];
+    const teamNames: string[] = [];
+
+    for (const link of links) {
+      const nameMatch = link.match(/>([^<]+)</);
+      if (!nameMatch) continue;
+      const name = nameMatch[1].trim();
+      if (name.length > 2 && !name.match(/^\d/) && !name.toLowerCase().includes('jornada') && !name.includes('.com')) {
+        teamNames.push(name);
+      }
+    }
+
+    if (teamNames.length < 2) continue;
+
+    const scoreMatch = row.match(/>(\d+)\s*-\s*(\d+)</);
+    const dateMatch = row.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    const timeMatch = row.match(/(\d{1,2}:\d{2})/);
+
+    let date = '';
+    if (dateMatch) {
+      date = `${dateMatch[3]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[1].padStart(2, '0')}`;
+    }
+
+    const homeTeam = teamNames[0];
+    const awayTeam = teamNames[teamNames.length >= 2 ? 1 : 0];
+
+    if (homeTeam === awayTeam) continue;
+
+    matches.push({
+      matchday,
+      date,
+      time: timeMatch ? timeMatch[1] : '17:00',
+      homeTeam,
+      awayTeam,
+      homeScore: scoreMatch ? parseInt(scoreMatch[1]) : undefined,
+      awayScore: scoreMatch ? parseInt(scoreMatch[2]) : undefined,
+      status: scoreMatch ? 'finished' : (date ? 'scheduled' : 'scheduled'),
+    });
   }
-  
-  // Try ISO format
-  const isoMatch = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-  if (isoMatch) {
-    return dateStr;
-  }
-  
-  // Default
-  return new Date().toISOString().split('T')[0];
+
+  return matches;
 }

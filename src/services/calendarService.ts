@@ -43,65 +43,324 @@ export interface MatchDisplay {
   homeScore?: number;
   awayScore?: number;
   status: string;
+  matchday?: number;
 }
 
-// Fallback data when Supabase is not configured
 const fallbackMatches: MatchDisplay[] = [
   {
-    id: '1',
-    opponent: 'CD Laredo',
-    date: '2026-02-08',
+    id: 'fb-1',
+    opponent: 'Castro B',
+    date: '2025-10-05',
     time: '17:00',
     venue: 'La Planchada',
-    competition: 'Segunda Regional',
+    competition: 'Segunda Regional Grupo C',
     isHome: true,
-    status: 'scheduled'
-  },
-  {
-    id: '2',
-    opponent: 'UD Samano',
-    date: '2026-02-15',
-    time: '16:30',
-    venue: 'Campo Municipal Samano',
-    competition: 'Segunda Regional',
-    isHome: false,
-    status: 'scheduled'
-  },
-  {
-    id: '3',
-    opponent: 'Racing Santander B',
-    date: '2026-02-22',
-    time: '18:00',
-    venue: 'La Planchada',
-    competition: 'Segunda Regional',
-    isHome: true,
-    status: 'scheduled'
-  },
-  {
-    id: '4',
-    opponent: 'SD Cayón',
-    date: '2026-01-25',
-    time: '17:00',
-    venue: 'La Planchada',
-    competition: 'Segunda Regional',
-    isHome: true,
-    result: '2-1',
-    homeScore: 2,
+    result: '3-1',
+    homeScore: 3,
     awayScore: 1,
-    status: 'finished'
+    status: 'finished',
+    matchday: 1,
   },
   {
-    id: '5',
-    opponent: 'CD Revilla',
-    date: '2026-01-18',
+    id: 'fb-2',
+    opponent: 'CD Guarnizo C',
+    date: '2025-10-12',
+    time: '16:30',
+    venue: 'Campo Municipal Guarnizo',
+    competition: 'Segunda Regional Grupo C',
+    isHome: false,
+    result: '0-2',
+    homeScore: 0,
+    awayScore: 2,
+    status: 'finished',
+    matchday: 2,
+  },
+  {
+    id: 'fb-3',
+    opponent: 'SD Villaescusa B',
+    date: '2025-10-19',
+    time: '17:00',
+    venue: 'La Planchada',
+    competition: 'Segunda Regional Grupo C',
+    isHome: true,
+    result: '4-0',
+    homeScore: 4,
+    awayScore: 0,
+    status: 'finished',
+    matchday: 3,
+  },
+  {
+    id: 'fb-4',
+    opponent: 'Nueva Montaña',
+    date: '2025-10-26',
     time: '16:00',
-    venue: 'Campo Municipal Revilla',
-    competition: 'Segunda Regional',
+    venue: 'Campo Nueva Montaña',
+    competition: 'Segunda Regional Grupo C',
     isHome: false,
     result: '1-3',
     homeScore: 1,
     awayScore: 3,
-    status: 'finished'
+    status: 'finished',
+    matchday: 4,
+  },
+  {
+    id: 'fb-5',
+    opponent: 'Santoña CF',
+    date: '2025-11-02',
+    time: '17:00',
+    venue: 'La Planchada',
+    competition: 'Segunda Regional Grupo C',
+    isHome: true,
+    result: '2-0',
+    homeScore: 2,
+    awayScore: 0,
+    status: 'finished',
+    matchday: 5,
+  },
+  {
+    id: 'fb-6',
+    opponent: 'Samano B',
+    date: '2025-11-09',
+    time: '16:00',
+    venue: 'Campo Municipal Samano',
+    competition: 'Segunda Regional Grupo C',
+    isHome: false,
+    result: '0-4',
+    homeScore: 0,
+    awayScore: 4,
+    status: 'finished',
+    matchday: 6,
+  },
+  {
+    id: 'fb-7',
+    opponent: 'EMF Meruelo',
+    date: '2025-11-16',
+    time: '17:00',
+    venue: 'La Planchada',
+    competition: 'Segunda Regional Grupo C',
+    isHome: true,
+    result: '3-0',
+    homeScore: 3,
+    awayScore: 0,
+    status: 'finished',
+    matchday: 7,
+  },
+  {
+    id: 'fb-8',
+    opponent: 'Marina de Cudeyo',
+    date: '2025-11-23',
+    time: '16:00',
+    venue: 'Campo Marina de Cudeyo',
+    competition: 'Segunda Regional Grupo C',
+    isHome: false,
+    result: '0-2',
+    homeScore: 0,
+    awayScore: 2,
+    status: 'finished',
+    matchday: 8,
+  },
+  {
+    id: 'fb-9',
+    opponent: 'SD Noja B',
+    date: '2025-11-30',
+    time: '17:00',
+    venue: 'La Planchada',
+    competition: 'Segunda Regional Grupo C',
+    isHome: true,
+    result: '5-0',
+    homeScore: 5,
+    awayScore: 0,
+    status: 'finished',
+    matchday: 9,
+  },
+  {
+    id: 'fb-10',
+    opponent: 'Velarde Camargo B',
+    date: '2025-12-07',
+    time: '16:00',
+    venue: 'Campo Velarde Camargo',
+    competition: 'Segunda Regional Grupo C',
+    isHome: false,
+    result: '1-4',
+    homeScore: 1,
+    awayScore: 4,
+    status: 'finished',
+    matchday: 10,
+  },
+  {
+    id: 'fb-11',
+    opponent: 'CD Pontejos',
+    date: '2025-12-14',
+    time: '17:00',
+    venue: 'La Planchada',
+    competition: 'Segunda Regional Grupo C',
+    isHome: true,
+    result: '6-1',
+    homeScore: 6,
+    awayScore: 1,
+    status: 'finished',
+    matchday: 11,
+  },
+  {
+    id: 'fb-12',
+    opponent: 'Los Rios B',
+    date: '2025-12-21',
+    time: '16:00',
+    venue: 'Campo Los Rios',
+    competition: 'Segunda Regional Grupo C',
+    isHome: false,
+    result: '0-5',
+    homeScore: 0,
+    awayScore: 5,
+    status: 'finished',
+    matchday: 12,
+  },
+  {
+    id: 'fb-13',
+    opponent: 'Castro B',
+    date: '2026-01-11',
+    time: '16:00',
+    venue: 'Campo Municipal Castro',
+    competition: 'Segunda Regional Grupo C',
+    isHome: false,
+    result: '1-3',
+    homeScore: 1,
+    awayScore: 3,
+    status: 'finished',
+    matchday: 13,
+  },
+  {
+    id: 'fb-14',
+    opponent: 'CD Guarnizo C',
+    date: '2026-01-18',
+    time: '17:00',
+    venue: 'La Planchada',
+    competition: 'Segunda Regional Grupo C',
+    isHome: true,
+    result: '3-1',
+    homeScore: 3,
+    awayScore: 1,
+    status: 'finished',
+    matchday: 14,
+  },
+  {
+    id: 'fb-15',
+    opponent: 'SD Villaescusa B',
+    date: '2026-01-25',
+    time: '16:00',
+    venue: 'Campo Villaescusa',
+    competition: 'Segunda Regional Grupo C',
+    isHome: false,
+    result: '0-3',
+    homeScore: 0,
+    awayScore: 3,
+    status: 'finished',
+    matchday: 15,
+  },
+  {
+    id: 'fb-16',
+    opponent: 'Nueva Montaña',
+    date: '2026-02-01',
+    time: '17:00',
+    venue: 'La Planchada',
+    competition: 'Segunda Regional Grupo C',
+    isHome: true,
+    result: '4-2',
+    homeScore: 4,
+    awayScore: 2,
+    status: 'finished',
+    matchday: 16,
+  },
+  {
+    id: 'fb-17',
+    opponent: 'Santoña CF',
+    date: '2026-02-08',
+    time: '16:30',
+    venue: 'Campo Municipal Santoña',
+    competition: 'Segunda Regional Grupo C',
+    isHome: false,
+    result: '1-2',
+    homeScore: 1,
+    awayScore: 2,
+    status: 'finished',
+    matchday: 17,
+  },
+  {
+    id: 'fb-18',
+    opponent: 'Samano B',
+    date: '2026-02-15',
+    time: '17:00',
+    venue: 'La Planchada',
+    competition: 'Segunda Regional Grupo C',
+    isHome: true,
+    status: 'scheduled',
+    matchday: 18,
+  },
+  {
+    id: 'fb-19',
+    opponent: 'EMF Meruelo',
+    date: '2026-02-22',
+    time: '16:00',
+    venue: 'Campo Municipal Meruelo',
+    competition: 'Segunda Regional Grupo C',
+    isHome: false,
+    status: 'scheduled',
+    matchday: 19,
+  },
+  {
+    id: 'fb-20',
+    opponent: 'Marina de Cudeyo',
+    date: '2026-03-01',
+    time: '17:00',
+    venue: 'La Planchada',
+    competition: 'Segunda Regional Grupo C',
+    isHome: true,
+    status: 'scheduled',
+    matchday: 20,
+  },
+  {
+    id: 'fb-21',
+    opponent: 'SD Noja B',
+    date: '2026-03-08',
+    time: '16:00',
+    venue: 'Campo Municipal Noja',
+    competition: 'Segunda Regional Grupo C',
+    isHome: false,
+    status: 'scheduled',
+    matchday: 21,
+  },
+  {
+    id: 'fb-22',
+    opponent: 'Velarde Camargo B',
+    date: '2026-03-15',
+    time: '17:00',
+    venue: 'La Planchada',
+    competition: 'Segunda Regional Grupo C',
+    isHome: true,
+    status: 'scheduled',
+    matchday: 22,
+  },
+  {
+    id: 'fb-23',
+    opponent: 'CD Pontejos',
+    date: '2026-03-22',
+    time: '16:00',
+    venue: 'Campo Municipal Pontejos',
+    competition: 'Segunda Regional Grupo C',
+    isHome: false,
+    status: 'scheduled',
+    matchday: 23,
+  },
+  {
+    id: 'fb-24',
+    opponent: 'Los Rios B',
+    date: '2026-03-29',
+    time: '17:00',
+    venue: 'La Planchada',
+    competition: 'Segunda Regional Grupo C',
+    isHome: true,
+    status: 'scheduled',
+    matchday: 24,
   },
 ];
 
@@ -113,10 +372,9 @@ export const calendarService = {
     limit?: number;
   }): Promise<MatchDisplay[]> {
     if (!supabase) {
-      // Return fallback data filtered appropriately
       let matches = [...fallbackMatches];
       const now = new Date();
-      
+
       if (options?.upcoming) {
         matches = matches.filter(m => new Date(m.date) >= now);
       }
@@ -126,23 +384,15 @@ export const calendarService = {
       if (options?.limit) {
         matches = matches.slice(0, options.limit);
       }
-      
+
       return matches;
     }
 
     try {
       let query = supabase
         .from('matches')
-        .select(`
-          *,
-          competition:competitions(name, season),
-          team:teams(name, is_our_team)
-        `)
+        .select('*')
         .order('match_date', { ascending: options?.past ? false : true });
-
-      if (options?.teamId) {
-        query = query.eq('team_id', options.teamId);
-      }
 
       if (options?.upcoming) {
         query = query.gte('match_date', new Date().toISOString().split('T')[0]);
@@ -174,14 +424,15 @@ export const calendarService = {
         date: match.match_date,
         time: match.match_time,
         venue: match.venue,
-        competition: match.competition?.name || 'Segunda Regional',
+        competition: 'Segunda Regional Grupo C',
         isHome: match.is_home,
         result: match.home_score !== null && match.away_score !== null
           ? `${match.home_score}-${match.away_score}`
           : undefined,
         homeScore: match.home_score,
         awayScore: match.away_score,
-        status: match.status
+        status: match.status,
+        matchday: match.matchday,
       }));
     } catch (error) {
       console.error('Error in getMatches:', error);

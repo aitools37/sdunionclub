@@ -12,12 +12,12 @@ const Tickets: React.FC = () => {
   const upcomingMatches = [
     {
       id: '1',
-      title: 'UCA vs CD Laredo',
-      opponent: 'CD Laredo',
-      date: '2024-03-15',
+      title: 'UCA vs Samano B',
+      opponent: 'Samano B',
+      date: '2026-02-15',
       time: '17:00',
       venue: 'Campos de Sport La Planchada',
-      competition: 'Segunda Regional',
+      competition: 'Segunda Regional Grupo C',
       image: 'https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=600&h=300&fit=crop',
       ticketTypes: [
         { id: 'general', name: 'Entrada General', price: 5, available: 450 },
@@ -26,12 +26,12 @@ const Tickets: React.FC = () => {
     },
     {
       id: '2',
-      title: 'UD Samano vs UCA',
-      opponent: 'UD Samano',
-      date: '2024-03-22',
-      time: '16:30',
-      venue: 'Campo Municipal Samano',
-      competition: 'Segunda Regional',
+      title: 'EMF Meruelo vs UCA',
+      opponent: 'EMF Meruelo',
+      date: '2026-02-22',
+      time: '16:00',
+      venue: 'Campo Municipal Meruelo',
+      competition: 'Segunda Regional Grupo C',
       image: 'https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=600&h=300&fit=crop',
       ticketTypes: [
         { id: 'general', name: 'Entrada General', price: 5, available: 300 },
@@ -40,12 +40,12 @@ const Tickets: React.FC = () => {
     },
     {
       id: '3',
-      title: 'UCA vs Real Racing Santander B',
-      opponent: 'Real Racing Santander B',
-      date: '2024-03-29',
-      time: '18:00',
+      title: 'UCA vs Marina de Cudeyo',
+      opponent: 'Marina de Cudeyo',
+      date: '2026-03-01',
+      time: '17:00',
       venue: 'Campos de Sport La Planchada',
-      competition: 'Segunda Regional',
+      competition: 'Segunda Regional Grupo C',
       image: 'https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=600&h=300&fit=crop',
       ticketTypes: [
         { id: 'general', name: 'Entrada General', price: 5, available: 450 },

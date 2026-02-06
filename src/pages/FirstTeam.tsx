@@ -32,28 +32,28 @@ const FirstTeam: React.FC = () => {
   ];
 
   const seasonStats = {
-    matchesPlayed: 24,
-    wins: 14,
-    draws: 6,
-    losses: 4,
-    goalsFor: 42,
-    goalsAgainst: 28,
-    position: 3,
-    points: 48
+    matchesPlayed: 17,
+    wins: 17,
+    draws: 0,
+    losses: 0,
+    goalsFor: 57,
+    goalsAgainst: 9,
+    position: 1,
+    points: 51
   };
 
   const recentMatches = [
-    { opponent: 'SD Cayon', result: '2-1', date: '08/03/2024', venue: 'Local', status: 'win' },
-    { opponent: 'CD Revilla', result: '1-3', date: '01/03/2024', venue: 'Visitante', status: 'loss' },
-    { opponent: 'UD Castro', result: '0-0', date: '23/02/2024', venue: 'Local', status: 'draw' },
-    { opponent: 'CD Guarnizo', result: '3-1', date: '16/02/2024', venue: 'Visitante', status: 'win' },
-    { opponent: 'Racing Santander B', result: '2-2', date: '09/02/2024', venue: 'Local', status: 'draw' },
+    { opponent: 'Santoña CF', result: '1-2', date: '08/02/2026', venue: 'Visitante', status: 'win' },
+    { opponent: 'Nueva Montaña', result: '4-2', date: '01/02/2026', venue: 'Local', status: 'win' },
+    { opponent: 'SD Villaescusa B', result: '0-3', date: '25/01/2026', venue: 'Visitante', status: 'win' },
+    { opponent: 'CD Guarnizo C', result: '3-1', date: '18/01/2026', venue: 'Local', status: 'win' },
+    { opponent: 'Castro B', result: '1-3', date: '11/01/2026', venue: 'Visitante', status: 'win' },
   ];
 
   const upcomingMatches = [
-    { opponent: 'CD Laredo', date: '15/03/2024', time: '17:00', venue: 'Local' },
-    { opponent: 'UD Samano', date: '22/03/2024', time: '16:30', venue: 'Visitante' },
-    { opponent: 'Real Racing Santander B', date: '29/03/2024', time: '18:00', venue: 'Local' },
+    { opponent: 'Samano B', date: '15/02/2026', time: '17:00', venue: 'Local' },
+    { opponent: 'EMF Meruelo', date: '22/02/2026', time: '16:00', venue: 'Visitante' },
+    { opponent: 'Marina de Cudeyo', date: '01/03/2026', time: '17:00', venue: 'Local' },
   ];
 
   return (
@@ -70,7 +70,7 @@ const FirstTeam: React.FC = () => {
           <div className="text-center text-white px-4">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Primer Equipo</h1>
             <p className="text-xl text-primary-100 max-w-2xl mx-auto mb-6">
-              Segunda Regional Grupo B - Temporada 2023/24
+              Segunda Regional Grupo C - Temporada 2025/26
             </p>
             <div className="text-lg font-medium">
               "Unidos por la misma pasión"

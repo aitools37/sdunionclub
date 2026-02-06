@@ -15,9 +15,9 @@ const News: React.FC = () => {
   const news = [
     {
       id: 1,
-      title: 'Victoria contundente ante el CD Laredo por 3-0',
-      summary: 'Gran actuación del primer equipo en La Planchada con goles de Martín, González y Pérez. El equipo sigue escalando posiciones en la tabla.',
-      content: 'El S.D. Unión Club de Astillero consiguió una victoria muy importante ante el CD Laredo en La Planchada. El encuentro se desarrolló de manera muy favorable para los locales...',
+      title: 'Victoria contundente ante Nueva Montaña por 4-2',
+      summary: 'Gran actuación del primer equipo en La Planchada con goles de Martín, González y doblete de Pérez. El equipo sigue líder invicto.',
+      content: 'El S.D. Unión Club de Astillero consiguió una nueva victoria en La Planchada ante Nueva Montaña. El encuentro se desarrolló de manera muy favorable para los locales...',
       category: 'partidos',
       date: '2024-03-08',
       time: '18:30',
@@ -30,7 +30,7 @@ const News: React.FC = () => {
     {
       id: 2,
       title: 'Galería: Entrenamiento del primer equipo',
-      summary: 'Imágenes del entrenamiento de esta semana en preparación para el próximo partido contra el UD Samano.',
+      summary: 'Imágenes del entrenamiento de esta semana en preparación para el próximo partido contra Samano B.',
       content: 'El primer equipo ha trabajado intensamente durante esta semana preparando el próximo encuentro...',
       category: 'fotos',
       date: '2024-03-06',
@@ -58,7 +58,7 @@ const News: React.FC = () => {
     },
     {
       id: 4,
-      title: 'El Marismas vence 4-1 al CD Bezana',
+      title: 'El Marismas vence 4-1 al CD Pontejos',
       summary: 'Excelente partido del equipo filial que sigue líder en su categoría con autoridad.',
       content: 'El equipo Marismas del S.D. Unión Club de Astillero continúa su racha exitosa...',
       category: 'partidos',
@@ -86,8 +86,8 @@ const News: React.FC = () => {
     },
     {
       id: 6,
-      title: 'Fotos del partido contra SD Cayón',
-      summary: 'Las mejores imágenes del último partido en casa con victoria por 2-1.',
+      title: 'Fotos del partido contra Santoña CF',
+      summary: 'Las mejores imágenes del último partido fuera de casa con victoria por 1-2.',
       content: 'Recopilación fotográfica del emocionante encuentro disputado en La Planchada...',
       category: 'fotos',
       date: '2024-02-28',

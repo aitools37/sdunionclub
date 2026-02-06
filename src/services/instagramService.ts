@@ -28,7 +28,7 @@ export interface InstagramApiResponse {
 const mockInstagramPosts: InstagramPost[] = [
   {
     id: '1',
-    caption: '¡Victoria importante del primer equipo! 3-0 ante el CD Laredo en La Planchada. Gran actuación de todo el equipo 💪⚽ #UnionClubAstillero #Victoria #LaPlanchada',
+    caption: '¡Victoria importante del primer equipo! 4-2 ante Nueva Montaña en La Planchada. Gran actuación de todo el equipo 💪⚽ #UnionClubAstillero #Victoria #LaPlanchada',
     media_type: 'IMAGE',
     media_url: 'https://images.pexels.com/photos/274506/pexels-photo-274506.jpeg?auto=compress&cs=tinysrgb&w=800&h=800&fit=crop',
     permalink: 'https://www.instagram.com/p/C3xYzAbExample1/',

@@ -21,18 +21,18 @@ const Teams: React.FC = () => {
     {
       id: 'primer-equipo',
       name: 'Primer Equipo',
-      category: 'Segunda Regional Grupo B',
+      category: 'Segunda Regional Grupo C',
       description: 'Nuestro equipo senior que representa al club en la máxima categoría regional.',
       image: 'https://images.pexels.com/photos/274506/pexels-photo-274506.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop',
       stats: {
         players: 22,
         age: '18-35 años',
-        season: '2023-24',
+        season: '2025-26',
         stadium: 'La Planchada'
       },
       nextMatch: {
-        opponent: 'CD Laredo',
-        date: '2024-03-15',
+        opponent: 'Samano B',
+        date: '2026-02-15',
         time: '17:00',
         venue: 'Local'
       },
@@ -52,12 +52,12 @@ const Teams: React.FC = () => {
       stats: {
         players: 20,
         age: '16-25 años',
-        season: '2023-24',
+        season: '2025-26',
         stadium: 'La Planchada'
       },
       nextMatch: {
-        opponent: 'CD Bezana',
-        date: '2024-03-16',
+        opponent: 'CD Pontejos',
+        date: '2026-02-16',
         time: '11:00',
         venue: 'Local'
       },
@@ -243,7 +243,7 @@ const Teams: React.FC = () => {
             <div className="flex items-center mb-8">
               <TrendingUp className="w-8 h-8 text-primary-600 mr-3" />
               <h2 className="text-3xl font-bold text-secondary-900">
-                Clasificación Segunda Regional Grupo B
+                Clasificación Segunda Regional Grupo C
               </h2>
             </div>
             
