@@ -47,7 +47,8 @@ Deno.serve(async (req: Request) => {
     }
 
     const groupSlug = GROUP_MAP[competition.group_name] || 'grupo3';
-    const url = `https://es.besoccer.com/competicion/clasificacion/segunda_regional_cantabria/2026/${groupSlug}`;
+    const seasonYear = competition.season.split('-')[1] || '2026';
+    const url = `https://www.resultados-futbol.com/competicion/segunda_regional_cantabria/${seasonYear}/${groupSlug}/clasificacion`;
 
     console.log(`Fetching: ${url}`);
 
@@ -60,7 +61,7 @@ Deno.serve(async (req: Request) => {
     });
 
     if (!response.ok) {
-      throw new Error(`BeSoccer returned HTTP ${response.status}`);
+      throw new Error(`HTTP ${response.status} from resultados-futbol.com`);
     }
 
     const html = await response.text();
@@ -69,7 +70,7 @@ Deno.serve(async (req: Request) => {
     const teams = parseClassification(html);
 
     if (teams.length === 0) {
-      throw new Error('No teams parsed from BeSoccer HTML');
+      throw new Error(`No teams parsed. Tables found: ${(html.match(/<table/gi) || []).length}`);
     }
 
     console.log(`Parsed ${teams.length} teams`);
@@ -79,7 +80,7 @@ Deno.serve(async (req: Request) => {
 
     for (const t of teams) {
       try {
-        console.log(`  ${t.position}. ${t.name} - ${t.points}pts (${t.played}J ${t.won}G ${t.drawn}E ${t.lost}P)`);
+        console.log(`  ${t.position}. ${t.name} - ${t.points}pts (${t.played}J ${t.won}G ${t.drawn}E ${t.lost}P ${t.goalsFor}GF ${t.goalsAgainst}GC)`);
 
         const nameLower = t.name.toLowerCase();
         const isOurTeam = nameLower.includes('uni') && nameLower.includes('club');
@@ -153,43 +154,95 @@ Deno.serve(async (req: Request) => {
 });
 
 function parseClassification(html: string): TeamData[] {
+  const rows = html.match(/<tr[^>]*data-type\s*=\s*"total"[^>]*>[\s\S]*?<\/tr>/gi) || [];
+  console.log(`Found ${rows.length} total-type rows`);
+
+  if (rows.length === 0) {
+    return fallbackParse(html);
+  }
+
+  const teams: TeamData[] = [];
+
+  for (const row of rows) {
+    const posMatch = row.match(/<th[^>]*>(\d+)<\/th>/);
+    if (!posMatch) continue;
+    const position = parseInt(posMatch[1]);
+
+    const linkMatch = row.match(/<a\s+href="([^"]*)"[^>]*>([^<]+)<\/a>/);
+    if (!linkMatch) continue;
+    const link = linkMatch[1];
+    const name = linkMatch[2].trim();
+    if (!name || name.length < 2) continue;
+
+    const pts = extractByClass(row, 'pts');
+    const pj = extractByClass(row, 'pj');
+    const win = extractByClass(row, 'win');
+    const draw = extractByClass(row, 'draw');
+    const lose = extractByClass(row, 'lose');
+
+    const gfMatch = row.match(/<td\s+class="f"[^>]*>(\d+)<\/td>/);
+    const gcMatch = row.match(/<td\s+class="c"[^>]*>(\d+)<\/td>/);
+    const goalsFor = gfMatch ? parseInt(gfMatch[1]) : NaN;
+    const goalsAgainst = gcMatch ? parseInt(gcMatch[1]) : NaN;
+
+    if ([pts, pj, win, draw, lose, goalsFor, goalsAgainst].some(isNaN)) {
+      console.log(`NaN for ${name}: pts=${pts} pj=${pj} w=${win} d=${draw} l=${lose} gf=${goalsFor} gc=${goalsAgainst}`);
+      continue;
+    }
+
+    teams.push({
+      position,
+      name,
+      link: link.startsWith('http') ? link : `https://www.resultados-futbol.com${link}`,
+      points: pts,
+      played: pj,
+      won: win,
+      drawn: draw,
+      lost: lose,
+      goalsFor,
+      goalsAgainst,
+    });
+  }
+
+  console.log(`Parsed ${teams.length} teams from data-type=total rows`);
+  return teams;
+}
+
+function extractByClass(html: string, className: string): number {
+  const dataMatch = html.match(new RegExp(`<td[^>]*class="${className}"[^>]*data-total="(\\d+)"`, 'i'));
+  if (dataMatch) return parseInt(dataMatch[1]);
+
+  const textMatch = html.match(new RegExp(`<td[^>]*class="${className}"[^>]*>(\\d+)<\\/td>`, 'i'));
+  if (textMatch) return parseInt(textMatch[1]);
+
+  return NaN;
+}
+
+function fallbackParse(html: string): TeamData[] {
+  console.log('Using fallback parser');
   const tableRegex = /<table[^>]*>([\s\S]*?)<\/table>/gi;
   const tables = html.match(tableRegex) || [];
-  console.log(`Found ${tables.length} tables`);
+  console.log(`Fallback: found ${tables.length} tables`);
 
   let classTable = '';
   for (const table of tables) {
-    if ((table.includes('PTS') || table.includes('Puntos')) &&
-        (table.includes('PJ') || table.includes('PG')) &&
-        table.includes('GF')) {
+    if (table.includes('Puntos') && table.includes('PJ')) {
       classTable = table;
       break;
     }
   }
 
-  if (!classTable) {
-    for (const table of tables) {
-      const rowCount = (table.match(/<tr/gi) || []).length;
-      if (rowCount >= 10 && table.includes('<td')) {
-        classTable = table;
-        break;
-      }
-    }
-  }
-
-  if (!classTable) {
-    console.log('No classification table found');
-    return [];
-  }
+  if (!classTable) return [];
 
   const rows = classTable.match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi) || [];
-  console.log(`Table rows: ${rows.length}`);
-
   const teams: TeamData[] = [];
-  let autoPosition = 0;
 
   for (const row of rows) {
-    if (row.includes('<th')) continue;
+    const posMatch = row.match(/<th[^>]*>(\d+)<\/th>/);
+    if (!posMatch) continue;
+
+    const linkMatch = row.match(/<a[^>]*href="([^"]*)"[^>]*>([^<]+)<\/a>/);
+    if (!linkMatch) continue;
 
     const cells: string[] = [];
     const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
@@ -198,86 +251,30 @@ function parseClassification(html: string): TeamData[] {
       cells.push(m[1]);
     }
 
-    if (cells.length < 8) continue;
-
-    let name = '';
-    let link = '';
-    let nameIdx = -1;
-
-    for (let i = 0; i < cells.length; i++) {
-      const linkMatch = cells[i].match(/<a[^>]*href="([^"]*)"[^>]*>([^<]+)<\/a>/);
-      if (linkMatch && linkMatch[2].trim().length > 2) {
-        link = linkMatch[1];
-        name = linkMatch[2].trim();
-        nameIdx = i;
-        break;
+    const nums: number[] = [];
+    for (const cell of cells) {
+      const stripped = cell.replace(/<[^>]+>/g, '').trim();
+      const n = parseInt(stripped);
+      if (!isNaN(n) && stripped === String(n)) {
+        nums.push(n);
       }
     }
 
-    if (!name || nameIdx < 0) {
-      for (let i = 0; i < Math.min(cells.length, 4); i++) {
-        const altMatch = cells[i].match(/alt="([^"]+)"/);
-        if (altMatch && altMatch[1].trim().length > 2) {
-          name = altMatch[1].trim();
-          nameIdx = i;
-          break;
-        }
-      }
-    }
-
-    if (!name || nameIdx < 0) continue;
-
-    autoPosition++;
-    const posText = strip(cells[0]);
-    const posNum = parseInt(posText);
-    if (!isNaN(posNum) && posNum > 0 && posNum <= 30) {
-      autoPosition = posNum;
-    }
-
-    const stats = cells.slice(nameIdx + 1);
-    if (stats.length < 7) continue;
-
-    const points = parseInt(strip(stats[0]));
-    const played = parseInt(strip(stats[1]));
-    const won = parseInt(strip(stats[2]));
-    const drawn = parseInt(strip(stats[3]));
-    const lost = parseInt(strip(stats[4]));
-    const goalsFor = parseInt(strip(stats[5]));
-    const goalsAgainst = parseInt(strip(stats[6]));
-
-    if ([points, played, won, drawn, lost, goalsFor, goalsAgainst].some(isNaN)) {
-      console.log(`NaN in row for: ${name}, cells: ${stats.slice(0, 7).map(strip).join(', ')}`);
-      continue;
-    }
-
-    if (played < 0 || won < 0 || drawn < 0 || lost < 0 || goalsFor < 0 || goalsAgainst < 0) {
-      console.log(`Negative value in row for: ${name}`);
-      continue;
-    }
+    if (nums.length < 7) continue;
 
     teams.push({
-      position: autoPosition,
-      name,
-      link: link.startsWith('http') ? link : link ? `https://es.besoccer.com${link}` : '',
-      points,
-      played,
-      won,
-      drawn,
-      lost,
-      goalsFor,
-      goalsAgainst,
+      position: parseInt(posMatch[1]),
+      name: linkMatch[2].trim(),
+      link: linkMatch[1],
+      points: nums[0],
+      played: nums[1],
+      won: nums[2],
+      drawn: nums[3],
+      lost: nums[4],
+      goalsFor: nums[5],
+      goalsAgainst: nums[6],
     });
   }
 
-  if (teams.length > 20) {
-    console.log(`${teams.length} rows found, keeping first 13 (Total only)`);
-    return teams.slice(0, 13);
-  }
-
-  console.log(`Final: ${teams.length} teams parsed`);
   return teams;
-}
-
-function strip(html: string): string {
-  return html.replace(/<[^>]+>/g, '').replace(/&[^;]+;/g, ' ').replace(/\s+/g, ' ').trim();
 }
