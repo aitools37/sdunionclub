@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
+import { RouteScrollToTop } from './components/ScrollToTop';
+import SEOHead from './components/SEOHead';
 import Home from './pages/Home';
 import Store from './pages/Store';
 import Merchandising from './pages/Merchandising';
@@ -27,6 +29,8 @@ import News from './pages/News';
 function App() {
   return (
     <Router>
+      <RouteScrollToTop />
+      <SEOHead />
       <div className="min-h-screen bg-white">
         <Toaster 
           position="top-right"

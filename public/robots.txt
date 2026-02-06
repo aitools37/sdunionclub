@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /carrito
+Disallow: /checkout
+Disallow: /confirmacion/
+Disallow: /entradas/checkout
+Disallow: /hazte-socio/checkout
+
+Sitemap: https://sdunionclub.com/sitemap.xml
