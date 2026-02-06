@@ -13,12 +13,21 @@ const GROUP_MAP: Record<string, string> = {
   'Grupo D': 'grupo4',
 };
 
+interface TeamData {
+  position: number;
+  name: string;
+  points: number;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
@@ -37,37 +46,32 @@ Deno.serve(async (req: Request) => {
     }
 
     const groupSlug = GROUP_MAP[competition.group_name] || 'grupo3';
-    const besoccerUrl = `https://es.besoccer.com/competicion/clasificacion/segunda_regional_cantabria/2026/${groupSlug}`;
+    const seasonYear = competition.season.split('-')[1] || '2026';
+    const url = `https://www.resultados-futbol.com/competicion/segunda_regional_cantabria/${seasonYear}/${groupSlug}/clasificacion`;
 
-    console.log(`Competition: ${competition.name} - ${competition.group_name} (${competition.season})`);
-    console.log(`BeSoccer URL: ${besoccerUrl}`);
+    console.log(`Fetching: ${url}`);
 
-    const teams = await scrapeBeSoccer(besoccerUrl);
+    const teams = await scrapeResultadosFutbol(url);
 
     if (teams.length === 0) {
-      throw new Error(`Could not retrieve classification data from BeSoccer for ${competition.group_name}`);
+      throw new Error(`No teams found for ${competition.group_name}. URL: ${url}`);
     }
 
-    console.log(`Found ${teams.length} teams in ${competition.group_name}`);
+    console.log(`Found ${teams.length} teams`);
 
     const totalTeams = teams.length;
     let processedCount = 0;
 
-    for (let i = 0; i < teams.length; i++) {
-      const t = teams[i];
-
+    for (const t of teams) {
       try {
-        console.log(`  ${t.position}. ${t.name} - ${t.points} pts (${t.played}J ${t.won}G ${t.drawn}E ${t.lost}P)`);
+        console.log(`  ${t.position}. ${t.name} - ${t.points}pts (${t.played}J ${t.won}G ${t.drawn}E ${t.lost}P ${t.goalsFor}GF ${t.goalsAgainst}GC)`);
 
-        const isOurTeam = t.name.toLowerCase().includes('uni') && t.name.toLowerCase().includes('club');
+        const nameLower = t.name.toLowerCase();
+        const isOurTeam = nameLower.includes('uni') && nameLower.includes('club');
 
         const { data: teamData, error: teamError } = await supabase
           .from('teams')
-          .upsert({
-            name: t.name,
-            short_name: t.name,
-            is_our_team: isOurTeam,
-          }, {
+          .upsert({ name: t.name, short_name: t.name, is_our_team: isOurTeam }, {
             onConflict: 'name',
             ignoreDuplicates: false,
           })
@@ -75,13 +79,9 @@ Deno.serve(async (req: Request) => {
           .maybeSingle();
 
         if (teamError || !teamData) {
-          console.error('Error upserting team:', t.name, teamError);
+          console.error('Team upsert error:', t.name, teamError);
           continue;
         }
-
-        const isPromoted = t.position === 1;
-        const isPlayoff = t.position >= 2 && t.position <= 3;
-        const isRelegated = t.position > totalTeams - 3;
 
         const { error: standingError } = await supabase
           .from('classification_standings')
@@ -97,23 +97,21 @@ Deno.serve(async (req: Request) => {
             goals_for: t.goalsFor,
             goals_against: t.goalsAgainst,
             goal_difference: t.goalsFor - t.goalsAgainst,
-            form: t.form,
-            is_promoted: isPromoted,
-            is_playoff: isPlayoff,
-            is_relegated: isRelegated,
+            form: '',
+            is_promoted: t.position === 1,
+            is_playoff: t.position >= 2 && t.position <= 3,
+            is_relegated: t.position > totalTeams - 3,
             scraped_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-          }, {
-            onConflict: 'competition_id,team_id',
-          });
+          }, { onConflict: 'competition_id,team_id' });
 
         if (standingError) {
-          console.error('Error upserting standing:', t.name, standingError);
+          console.error('Standing upsert error:', t.name, standingError);
         } else {
           processedCount++;
         }
-      } catch (teamError) {
-        console.error(`Error processing team ${i + 1}:`, teamError);
+      } catch (e) {
+        console.error(`Error processing ${t.name}:`, e);
       }
     }
 
@@ -125,75 +123,47 @@ Deno.serve(async (req: Request) => {
         total: totalTeams,
         group: competition.group_name,
         season: competition.season,
-        timestamp: new Date().toISOString(),
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Error:', error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
 
-interface TeamData {
-  position: number;
-  name: string;
-  points: number;
-  played: number;
-  won: number;
-  drawn: number;
-  lost: number;
-  goalsFor: number;
-  goalsAgainst: number;
-  form: string;
-}
-
-async function scrapeBeSoccer(url: string): Promise<TeamData[]> {
+async function scrapeResultadosFutbol(url: string): Promise<TeamData[]> {
   const response = await fetch(url, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'es-ES,es;q=0.9',
+      'Cookie': 'euconsent-v2=accept',
     },
   });
 
   if (!response.ok) {
-    throw new Error(`BeSoccer returned ${response.status}`);
+    throw new Error(`HTTP ${response.status} from resultados-futbol.com`);
   }
 
   const html = await response.text();
-  console.log('BeSoccer page size:', html.length, 'bytes');
+  console.log('Page size:', html.length, 'bytes');
 
-  return parseBeSoccerHTML(html);
+  return parseHTML(html);
 }
 
-function parseBeSoccerHTML(html: string): TeamData[] {
-  const teams: TeamData[] = [];
-
+function parseHTML(html: string): TeamData[] {
   const tableRegex = /<table[^>]*>([\s\S]*?)<\/table>/gi;
-  const tables = html.match(tableRegex);
+  const tables = html.match(tableRegex) || [];
 
-  if (!tables) {
-    console.log('No tables found in BeSoccer HTML');
-    return [];
-  }
+  console.log(`Found ${tables.length} tables`);
 
   let classTable = '';
   for (const table of tables) {
-    if ((table.includes('PTS') || table.includes('Puntos')) &&
-        (table.includes('PJ') || table.includes('PG')) &&
-        (table.includes('GF') || table.includes('GC'))) {
+    if (table.includes('Puntos') && table.includes('PJ') && table.includes('GF')) {
       classTable = table;
       break;
     }
@@ -201,8 +171,8 @@ function parseBeSoccerHTML(html: string): TeamData[] {
 
   if (!classTable) {
     for (const table of tables) {
-      const rowCount = (table.match(/<tr/gi) || []).length;
-      if (rowCount >= 10) {
+      const rows = (table.match(/<tr/gi) || []).length;
+      if (rows >= 14 && table.includes('<td')) {
         classTable = table;
         break;
       }
@@ -210,136 +180,76 @@ function parseBeSoccerHTML(html: string): TeamData[] {
   }
 
   if (!classTable) {
-    console.log('No classification table found');
-
-    const divRegex = /class="[^"]*panel-body[^"]*"[^>]*>([\s\S]*?)(?=<div[^>]*class="[^"]*panel-body)/gi;
-    const sections = html.match(divRegex);
-    if (sections) {
-      console.log('Found', sections.length, 'panel sections');
-    }
-
-    return parseFromStructuredData(html);
+    console.log('No classification table found in HTML');
+    return [];
   }
 
   const rows = classTable.match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi) || [];
-  console.log('Table rows found:', rows.length);
+  console.log(`Table has ${rows.length} rows`);
+
+  const teams: TeamData[] = [];
 
   for (const row of rows) {
     if (row.includes('<th')) continue;
 
     const cells: string[] = [];
     const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
-    let cellMatch;
-
-    while ((cellMatch = cellRegex.exec(row)) !== null) {
-      const text = cellMatch[1]
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\*\*/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-      cells.push(text);
+    let match;
+    while ((match = cellRegex.exec(row)) !== null) {
+      cells.push(match[1]);
     }
 
-    if (cells.length < 8) continue;
+    if (cells.length < 9) continue;
 
-    const posStr = cells[0].trim();
-    const position = parseInt(posStr);
-    if (isNaN(position)) continue;
+    const position = parseInt(stripHTML(cells[0]));
+    if (isNaN(position) || position < 1 || position > 30) continue;
 
+    const nameCell = cells[1];
     let name = '';
-    for (const cell of cells) {
-      const cleaned = cell.replace(/[0-9]/g, '').trim();
-      if (cleaned.length > 3 && !/^[VDEW\s]+$/.test(cleaned)) {
-        name = cleaned;
-        break;
+
+    const linkMatch = nameCell.match(/<a[^>]*>([^<]+)<\/a>/);
+    if (linkMatch) {
+      name = linkMatch[1].trim();
+    }
+
+    if (!name) {
+      const altMatch = nameCell.match(/alt="([^"]+)"/);
+      if (altMatch) {
+        name = altMatch[1].trim();
       }
     }
 
-    if (!name) continue;
-
-    const numbers: number[] = [];
-    for (let i = 0; i < cells.length; i++) {
-      const num = parseInt(cells[i].trim());
-      if (!isNaN(num) && cells[i].trim() === String(num)) {
-        numbers.push(num);
-      }
+    if (!name) {
+      name = stripHTML(nameCell).trim();
     }
 
-    if (numbers.length < 8) continue;
+    if (!name || name.length < 2) continue;
 
-    const formMatch = row.match(/([VDEW]\s*){3,}/);
-    const form = formMatch ? formMatch[0].replace(/\s+/g, '') : '';
+    const points = parseInt(stripHTML(cells[2]));
+    const played = parseInt(stripHTML(cells[3]));
+    const won = parseInt(stripHTML(cells[4]));
+    const drawn = parseInt(stripHTML(cells[5]));
+    const lost = parseInt(stripHTML(cells[6]));
+    const goalsFor = parseInt(stripHTML(cells[7]));
+    const goalsAgainst = parseInt(stripHTML(cells[8]));
 
-    teams.push({
-      position: numbers[0],
-      name,
-      points: numbers[1],
-      played: numbers[2],
-      won: numbers[3],
-      drawn: numbers[4],
-      lost: numbers[5],
-      goalsFor: numbers[6],
-      goalsAgainst: numbers[7],
-      form,
-    });
+    if ([points, played, won, drawn, lost, goalsFor, goalsAgainst].some(isNaN)) {
+      console.log(`Skipping row with NaN values: ${name}`);
+      continue;
+    }
+
+    teams.push({ position, name, points, played, won, drawn, lost, goalsFor, goalsAgainst });
   }
 
-  if (teams.length > 0) {
-    console.log('Parsed', teams.length, 'teams from BeSoccer table');
-    return teams;
+  if (teams.length > 13) {
+    console.log(`Found ${teams.length} rows, trimming to first 13 (Total table only)`);
+    return teams.slice(0, 13);
   }
 
-  return parseFromStructuredData(html);
+  console.log(`Parsed ${teams.length} teams`);
+  return teams;
 }
 
-function parseFromStructuredData(html: string): TeamData[] {
-  const teams: TeamData[] = [];
-
-  const teamPattern = /(\d+)\s+\|\s+([^|]+?)\s+\[([^\]]+)\][^|]*\|\s+(\d+)\s+\|\s+(\d+)\s+\|\s+(\d+)\s+\|\s+(\d+)\s+\|\s+(\d+)\s+\|\s+(\d+)\s+\|\s+(\d+)/g;
-  let match;
-
-  while ((match = teamPattern.exec(html)) !== null) {
-    const formMatch = match[0].match(/([VDEW]\s+){2,}/);
-
-    teams.push({
-      position: parseInt(match[1]),
-      name: match[3].trim(),
-      points: parseInt(match[4]),
-      played: parseInt(match[5]),
-      won: parseInt(match[6]),
-      drawn: parseInt(match[7]),
-      lost: parseInt(match[8]),
-      goalsFor: parseInt(match[9]),
-      goalsAgainst: parseInt(match[10]),
-      form: formMatch ? formMatch[0].replace(/\s+/g, '') : '',
-    });
-  }
-
-  if (teams.length > 0) {
-    console.log('Parsed', teams.length, 'teams from structured data');
-    return teams;
-  }
-
-  const linePattern = /\|\s*(\d{1,2})\s*\|\s*([A-ZÁÉÍÓÚÑa-záéíóúñ\s.']+?)(?:\s*\[|\s*\|)\s*(?:\[([^\]]+)\])?\s*[^|]*?\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)/g;
-
-  while ((match = linePattern.exec(html)) !== null) {
-    const name = (match[3] || match[2]).trim();
-    if (!name || name.length < 3) continue;
-
-    teams.push({
-      position: parseInt(match[1]),
-      name,
-      points: parseInt(match[4]),
-      played: parseInt(match[5]),
-      won: parseInt(match[6]),
-      drawn: parseInt(match[7]),
-      lost: parseInt(match[8]),
-      goalsFor: parseInt(match[9]),
-      goalsAgainst: parseInt(match[10]),
-      form: '',
-    });
-  }
-
-  console.log('Fallback parsing found', teams.length, 'teams');
-  return teams;
+function stripHTML(html: string): string {
+  return html.replace(/<[^>]+>/g, '').replace(/&[^;]+;/g, ' ').replace(/\s+/g, ' ').trim();
 }
