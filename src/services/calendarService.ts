@@ -376,10 +376,14 @@ export const calendarService = {
       const now = new Date();
 
       if (options?.upcoming) {
-        matches = matches.filter(m => new Date(m.date) >= now);
+        matches = matches
+          .filter(m => new Date(m.date) >= now)
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       }
       if (options?.past) {
-        matches = matches.filter(m => new Date(m.date) < now);
+        matches = matches
+          .filter(m => new Date(m.date) < now)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       }
       if (options?.limit) {
         matches = matches.slice(0, options.limit);
