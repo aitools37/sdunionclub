@@ -104,7 +104,7 @@ const Classification: React.FC = () => {
               <h1 className="text-3xl font-bold text-secondary-900">Clasificación</h1>
             </div>
             <p className="text-lg text-secondary-600 mb-4">
-              Segunda Regional Grupo B - Temporada 2025-2026
+              Segunda Regional Grupo C - Temporada 2025-2026
             </p>
             {lastUpdated && (
               <p className="text-sm text-secondary-500">
@@ -194,10 +194,10 @@ const Classification: React.FC = () => {
               ) : (
                 <RefreshCw className="w-4 h-4" />
               )}
-              <span>Actualizar desde RFCF</span>
+              <span>Actualizar clasificación</span>
             </button>
             <a
-              href="https://www.rfcf.es/pnfg/NPcd/NFG_VisClasificacion?cod_primaria=1000120&codcompeticion=22119651&codgrupo=22119686&cod_agrupacion=1"
+              href="https://www.rfcf.es/pnfg/NPcd/NFG_VisClasificacion?cod_primaria=1000120&codcompeticion=22119651&codgrupo=22119687&cod_agrupacion=1"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center space-x-2 px-4 py-2 bg-secondary-600 text-white rounded-lg hover:bg-secondary-700 transition-colors"
@@ -245,7 +245,7 @@ const Classification: React.FC = () => {
                 ) : (
                   <RefreshCw className="w-5 h-5" />
                 )}
-                <span>{isScraping ? 'Obteniendo datos...' : 'Actualizar desde RFCF'}</span>
+                <span>{isScraping ? 'Obteniendo datos...' : 'Actualizar clasificación'}</span>
               </button>
             </div>
           ) : classification.length > 0 ? (
@@ -413,7 +413,7 @@ const Classification: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <h4 className="font-medium text-secondary-900 mb-2">Competición</h4>
-              <p className="text-secondary-600">Segunda Regional Grupo B</p>
+              <p className="text-secondary-600">Segunda Regional Grupo C</p>
               <p className="text-secondary-500 text-sm">Temporada 2025-2026</p>
             </div>
             <div>
