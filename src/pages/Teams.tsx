@@ -30,15 +30,8 @@ const Teams: React.FC = () => {
         season: '2025-26',
         stadium: 'La Planchada'
       },
-      nextMatch: {
-        opponent: 'Samano B',
-        date: '2026-02-15',
-        time: '17:00',
-        venue: 'Local'
-      },
       highlights: [
         'Equipo con más historia del club',
-        'Participante en Segunda Regional desde 2018',
         'Base de jugadores locales de El Astillero',
         'Cantera de futuros talentos'
       ]
@@ -55,15 +48,8 @@ const Teams: React.FC = () => {
         season: '2025-26',
         stadium: 'La Planchada'
       },
-      nextMatch: {
-        opponent: 'CD Pontejos',
-        date: '2026-02-16',
-        time: '11:00',
-        venue: 'Local'
-      },
       highlights: [
         'Equipo de desarrollo y formación',
-        'Campeones de Tercera Regional 2021',
         'Combinación de veteranos y jóvenes promesas',
         'Importante rol en la cantera del club'
       ]
@@ -77,7 +63,7 @@ const Teams: React.FC = () => {
       stats: {
         players: 120,
         age: '6-18 años',
-        season: '2023-24',
+        season: '2025-26',
         stadium: 'La Planchada + Campos auxiliares'
       },
       categories: [
@@ -427,21 +413,8 @@ const Teams: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Next Match or Categories */}
-                  {team.nextMatch ? (
-                    <div className="mb-6 p-4 bg-primary-50 rounded-lg">
-                      <h4 className="font-semibold text-secondary-900 mb-2 flex items-center">
-                        <Calendar className="w-4 h-4 mr-2" />
-                        Próximo Partido
-                      </h4>
-                      <div className="text-secondary-700">
-                        <div className="font-medium">vs {team.nextMatch.opponent}</div>
-                        <div className="text-sm">
-                          {team.nextMatch.date} - {team.nextMatch.time} ({team.nextMatch.venue})
-                        </div>
-                      </div>
-                    </div>
-                  ) : team.categories && (
+                  {/* Categories */}
+                  {team.categories && (
                     <div className="mb-6">
                       <h4 className="font-semibold text-secondary-900 mb-3">Categorías</h4>
                       <div className="grid grid-cols-2 gap-2">
@@ -512,7 +485,7 @@ const Teams: React.FC = () => {
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Calendar className="w-8 h-8 text-primary-600" />
               </div>
-              <div className="text-3xl font-bold text-secondary-900 mb-2">102</div>
+              <div className="text-3xl font-bold text-secondary-900 mb-2">103</div>
               <div className="text-secondary-600">Años de Historia</div>
             </div>
           </div>
