@@ -3,6 +3,7 @@ import { Trophy, Calendar, MapPin, Users, Star, Target, TrendingUp } from 'lucid
 import { calendarService, MatchDisplay } from '../services/calendarService';
 import { classificationService } from '../services/classificationService';
 import { OUR_TEAM_NAME } from '../lib/team';
+import PlayerRoster from '../components/PlayerRoster';
 
 const FirstTeam: React.FC = () => {
   const [recentMatches, setRecentMatches] = useState<MatchDisplay[]>([]);
@@ -170,6 +171,10 @@ const FirstTeam: React.FC = () => {
               </div>
             )}
           </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-8 mb-12">
+          <PlayerRoster teamSlug="primer-equipo" />
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-8 mb-12">

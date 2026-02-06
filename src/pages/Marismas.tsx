@@ -1,5 +1,6 @@
 import React from 'react';
 import { Trophy, Users, Star, Target } from 'lucide-react';
+import PlayerRoster from '../components/PlayerRoster';
 
 const Marismas: React.FC = () => {
   return (
@@ -50,6 +51,10 @@ const Marismas: React.FC = () => {
               />
             </div>
           </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-8 mb-12">
+          <PlayerRoster teamSlug="marismas-juvenil" />
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-8 mb-12">

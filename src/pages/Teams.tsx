@@ -1,21 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, Users, Calendar, MapPin, ArrowRight, TrendingUp, Award } from 'lucide-react';
-
-interface ClassificationTeam {
-  position: number;
-  team: string;
-  points: number;
-  played: number;
-  won: number;
-  drawn: number;
-  lost: number;
-}
+import { classificationService, ClassificationTeam } from '../services/classificationService';
 
 const Teams: React.FC = () => {
   const [classification, setClassification] = useState<ClassificationTeam[]>([]);
   const [loadingClassification, setLoadingClassification] = useState(true);
-  const [classificationError, setClassificationError] = useState<string | null>(null);
 
   const teams = [
     {
@@ -83,116 +73,14 @@ const Teams: React.FC = () => {
     }
   ];
 
-  // Fetch classification data
   useEffect(() => {
     const fetchClassification = async () => {
       try {
         setLoadingClassification(true);
-        setClassificationError(null);
-
-        const proxyUrl = 'https://corsproxy.io/?';
-        const targetUrl = 'https://www.rfcf.es/pnfg/NPcd/NFG_VisClasificacion?cod_primaria=1000120&codcompeticion=7986463&codgrupo=7986502';
-        
-        const response = await fetch(`${proxyUrl}${encodeURIComponent(targetUrl)}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const htmlText = await response.text();
-        console.log('Fetched HTML content:', htmlText);
-        
-        // Parse HTML using DOMParser
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlText, 'text/html');
-        
-        // Find the visible classification table (summary table)
-        // Using more specific selector targeting the visible summary table
-        const resumeSection = doc.querySelector('span#CL_Resumen[style*="display:"]');
-        
-        if (!resumeSection) {
-          throw new Error('No se encontró la sección de resumen de clasificación');
-        }
-        
-        const table = resumeSection.querySelector('table');
-        
-        if (!table) {
-          throw new Error('No se encontró la tabla de clasificación');
-        }
-        
-        const rows = table.querySelectorAll('tbody tr');
-        const classificationData: ClassificationTeam[] = [];
-        
-        console.log(`Found ${rows.length} rows in classification table`);
-        
-        rows.forEach((row, index) => {
-          const cells = row.querySelectorAll('td');
-          console.log(`Row ${index} has ${cells.length} cells:`, Array.from(cells).map(cell => cell.textContent?.trim()));
-          
-          // Based on the actual HTML structure from CL_Resumen:
-          // cells[0]: Color indicator
-          // cells[1]: Position number
-          // cells[2]: Team name (with link)
-          // cells[3]: Points
-          // cells[4]: Played games (hidden-xs)
-          // cells[5]: Won games (hidden-xs)
-          // cells[6]: Drawn games (hidden-xs)
-          // cells[7]: Lost games (hidden-xs)
-          // cells[8]: Last results
-          // cells[9]: Sanctions (hidden-xs)
-          
-          if (cells.length >= 9) {
-            const positionText = cells[1]?.textContent?.trim() || '0';
-            const position = parseInt(positionText);
-            
-            const teamElement = cells[2]?.querySelector('a') || cells[2];
-            const team = teamElement?.textContent?.trim() || '';
-            
-            const pointsText = cells[3]?.textContent?.trim() || '0';
-            const points = parseInt(pointsText);
-            
-            const playedText = cells[4]?.textContent?.trim() || '0';
-            const played = parseInt(playedText);
-            
-            const wonText = cells[5]?.textContent?.trim() || '0';
-            const won = parseInt(wonText);
-            
-            const drawnText = cells[6]?.textContent?.trim() || '0';
-            const drawn = parseInt(drawnText);
-            
-            const lostText = cells[7]?.textContent?.trim() || '0';
-            const lost = parseInt(lostText);
-            
-            console.log(`Parsing team: ${team}, pos: ${position}, pts: ${points}, played: ${played}`);
-            
-            if (team && position > 0 && !isNaN(points)) {
-              const teamData: ClassificationTeam = {
-                position,
-                team,
-                points,
-                played,
-                won,
-                drawn,
-                lost
-              };
-              
-              classificationData.push(teamData);
-            }
-          } else {
-            console.log(`Row ${index} skipped - insufficient cells (${cells.length})`);
-          }
-        });
-        
-        console.log('Final parsed classification data:', classificationData);
-        
-        if (classificationData.length === 0) {
-          throw new Error('No se pudieron extraer datos de la clasificación');
-        }
-        
-        setClassification(classificationData);
+        const data = await classificationService.getClassification();
+        setClassification(data);
       } catch (error) {
         console.error('Error fetching classification:', error);
-        setClassificationError('Error al cargar la clasificación. Inténtalo de nuevo más tarde.');
       } finally {
         setLoadingClassification(false);
       }
@@ -201,21 +89,27 @@ const Teams: React.FC = () => {
     fetchClassification();
   }, []);
 
-  // Find our team in the classification
-  const ourTeamInClassification = classification.find(team => 
-    team.team.toLowerCase().includes('unión') || 
-    team.team.toLowerCase().includes('astillero')
+  const ourTeamInClassification = classification.find(team =>
+    team.team.toLowerCase().includes('union')
   );
+
+  const getResultBadge = (result: string) => {
+    switch (result) {
+      case 'G': return 'bg-green-500';
+      case 'E': return 'bg-yellow-500';
+      case 'P': return 'bg-red-500';
+      default: return 'bg-gray-400';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-gradient-to-r from-primary-600 to-secondary-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-4">Nuestros Equipos</h1>
             <p className="text-xl text-primary-100 max-w-2xl mx-auto">
-              Desde el primer equipo hasta las escuelas de fútbol base, 
+              Desde el primer equipo hasta las escuelas de fútbol base,
               todos unidos por los mismos colores y valores
             </p>
           </div>
@@ -223,7 +117,6 @@ const Teams: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Classification Section */}
         <div className="mb-16">
           <div className="bg-white rounded-lg shadow-sm p-8">
             <div className="flex items-center mb-8">
@@ -232,8 +125,7 @@ const Teams: React.FC = () => {
                 Clasificación Segunda Regional Grupo C
               </h2>
             </div>
-            
-            {/* Our team highlight */}
+
             {ourTeamInClassification && (
               <div className="mb-6 p-4 bg-primary-50 rounded-lg border-l-4 border-primary-600">
                 <div className="flex items-center justify-between">
@@ -257,21 +149,8 @@ const Teams: React.FC = () => {
 
             {loadingClassification ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4" />
                 <p className="text-secondary-600">Cargando clasificación...</p>
-              </div>
-            ) : classificationError ? (
-              <div className="text-center py-8">
-                <div className="text-error-600 mb-4">
-                  <Award className="w-12 h-12 mx-auto mb-2" />
-                  <p>{classificationError}</p>
-                </div>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="text-primary-600 hover:text-primary-700 font-medium"
-                >
-                  Intentar de nuevo
-                </button>
               </div>
             ) : classification.length > 0 ? (
               <div className="overflow-x-auto">
@@ -285,58 +164,60 @@ const Teams: React.FC = () => {
                       <th className="px-4 py-3 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider">G</th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider">E</th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider">P</th>
+                      <th className="px-3 py-3 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider hidden md:table-cell">Forma</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {classification.map((team, index) => {
-                      const isOurTeam = team.team.toLowerCase().includes('unión') || 
-                                       team.team.toLowerCase().includes('astillero');
-                      const isTopThree = index < 3;
-                      const isRelegation = index >= classification.length - 3;
-                      
+                    {classification.map((team) => {
+                      const isOurTeam = team.team.toLowerCase().includes('union');
                       return (
-                        <tr 
-                          key={index} 
-                          className={`hover:bg-gray-50 ${
-                            isOurTeam ? 'bg-primary-50 border-primary-200' : ''
-                          }`}
+                        <tr
+                          key={team.position}
+                          className={`hover:bg-gray-50 ${isOurTeam ? 'bg-primary-50 border-primary-200' : ''}`}
                         >
                           <td className="px-4 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
-                                isTopThree ? 'bg-success-100 text-success-800' :
-                                isRelegation ? 'bg-error-100 text-error-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {team.position}
-                              </span>
-                            </div>
+                            <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+                              team.isPromoted ? 'bg-green-500 text-white' :
+                              team.isPlayoff ? 'bg-yellow-500 text-white' :
+                              team.isRelegated ? 'bg-red-500 text-white' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {team.position}
+                            </span>
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap">
-                            <div className={`text-sm font-medium ${
-                              isOurTeam ? 'text-primary-900' : 'text-secondary-900'
-                            }`}>
+                            <div className={`text-sm font-medium ${isOurTeam ? 'text-primary-900 font-bold' : 'text-secondary-900'}`}>
                               {team.team}
                             </div>
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-center">
-                            <span className={`text-lg font-bold ${
-                              isOurTeam ? 'text-primary-600' : 'text-secondary-900'
-                            }`}>
+                            <span className={`text-lg font-bold ${isOurTeam ? 'text-primary-600' : 'text-secondary-900'}`}>
                               {team.points}
                             </span>
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-center text-sm text-secondary-500">
                             {team.played}
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-center text-sm text-success-600">
+                          <td className="px-4 py-4 whitespace-nowrap text-center text-sm text-green-600">
                             {team.won}
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-center text-sm text-warning-600">
+                          <td className="px-4 py-4 whitespace-nowrap text-center text-sm text-yellow-600">
                             {team.drawn}
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-center text-sm text-error-600">
+                          <td className="px-4 py-4 whitespace-nowrap text-center text-sm text-red-600">
                             {team.lost}
+                          </td>
+                          <td className="px-3 py-4 whitespace-nowrap hidden md:table-cell">
+                            <div className="flex justify-center space-x-1">
+                              {team.lastFiveResults.slice(-5).map((result, idx) => (
+                                <span
+                                  key={idx}
+                                  className={`w-5 h-5 rounded-full ${getResultBadge(result)} text-white text-xs flex items-center justify-center font-bold`}
+                                >
+                                  {result}
+                                </span>
+                              ))}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -351,15 +232,18 @@ const Teams: React.FC = () => {
               </div>
             )}
 
-            {/* Legend */}
             <div className="mt-6 flex flex-wrap gap-4 text-xs">
               <div className="flex items-center">
-                <div className="w-3 h-3 bg-success-100 rounded mr-2"></div>
-                <span className="text-secondary-600">Posiciones de ascenso</span>
+                <div className="w-3 h-3 bg-green-500 rounded-full mr-2" />
+                <span className="text-secondary-600">Ascenso</span>
               </div>
               <div className="flex items-center">
-                <div className="w-3 h-3 bg-error-100 rounded mr-2"></div>
-                <span className="text-secondary-600">Posiciones de descenso</span>
+                <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2" />
+                <span className="text-secondary-600">Playoff</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-red-500 rounded-full mr-2" />
+                <span className="text-secondary-600">Descenso</span>
               </div>
               <div className="text-secondary-500">
                 PJ: Partidos Jugados | G: Ganados | E: Empatados | P: Perdidos
@@ -368,13 +252,11 @@ const Teams: React.FC = () => {
           </div>
         </div>
 
-        {/* Teams Overview */}
         <div className="space-y-12">
           {teams.map((team, index) => (
             <div key={team.id} className={`lg:grid lg:grid-cols-2 lg:gap-12 items-center ${
               index % 2 === 1 ? 'lg:grid-flow-col-dense' : ''
             }`}>
-              {/* Team Image */}
               <div className={`mb-8 lg:mb-0 ${index % 2 === 1 ? 'lg:col-start-2' : ''}`}>
                 <img
                   src={team.image}
@@ -383,7 +265,6 @@ const Teams: React.FC = () => {
                 />
               </div>
 
-              {/* Team Info */}
               <div className={`${index % 2 === 1 ? 'lg:col-start-1' : ''}`}>
                 <div className="bg-white rounded-lg shadow-sm p-8">
                   <div className="flex items-center mb-4">
@@ -392,16 +273,15 @@ const Teams: React.FC = () => {
                       {team.category}
                     </span>
                   </div>
-                  
+
                   <h2 className="text-3xl font-bold text-secondary-900 mb-4">
                     {team.name}
                   </h2>
-                  
+
                   <p className="text-secondary-600 mb-6 text-lg leading-relaxed">
                     {team.description}
                   </p>
 
-                  {/* Team Stats */}
                   <div className="grid grid-cols-2 gap-4 mb-6">
                     <div className="text-center p-3 bg-gray-50 rounded-lg">
                       <div className="text-2xl font-bold text-primary-600">{team.stats.players}</div>
@@ -413,7 +293,6 @@ const Teams: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Categories */}
                   {team.categories && (
                     <div className="mb-6">
                       <h4 className="font-semibold text-secondary-900 mb-3">Categorías</h4>
@@ -427,20 +306,18 @@ const Teams: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Highlights */}
                   <div className="mb-6">
                     <h4 className="font-semibold text-secondary-900 mb-3">Destacados</h4>
                     <ul className="space-y-2">
                       {team.highlights.map((highlight, highlightIndex) => (
                         <li key={highlightIndex} className="flex items-start text-secondary-600">
-                          <div className="w-2 h-2 bg-primary-600 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                          <div className="w-2 h-2 bg-primary-600 rounded-full mr-3 mt-2 flex-shrink-0" />
                           {highlight}
                         </li>
                       ))}
                     </ul>
                   </div>
 
-                  {/* CTA Button */}
                   <Link
                     to={`/equipos/${team.id}`}
                     className="inline-flex items-center bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
@@ -454,7 +331,6 @@ const Teams: React.FC = () => {
           ))}
         </div>
 
-        {/* Overall Stats */}
         <div className="mt-16 bg-white rounded-lg shadow-sm p-8">
           <h2 className="text-2xl font-bold text-secondary-900 mb-8 text-center">
             Datos Generales del Club
@@ -491,11 +367,10 @@ const Teams: React.FC = () => {
           </div>
         </div>
 
-        {/* Join Us Section */}
         <div className="mt-16 bg-primary-600 rounded-lg shadow-lg p-8 text-center text-white">
           <h2 className="text-3xl font-bold mb-4">¿Quieres formar parte?</h2>
           <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
-            Siempre estamos buscando nuevos talentos para nuestras categorías. 
+            Siempre estamos buscando nuevos talentos para nuestras categorías.
             Únete a la familia unionista y desarrolla tu pasión por el fútbol.
           </p>
           <div className="space-y-4 sm:space-y-0 sm:space-x-4 sm:flex sm:justify-center">
