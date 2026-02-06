@@ -365,6 +365,31 @@ const fallbackMatches: MatchDisplay[] = [
 ];
 
 export const calendarService = {
+  _filterFallback(options?: {
+    upcoming?: boolean;
+    past?: boolean;
+    limit?: number;
+  }): MatchDisplay[] {
+    let matches = [...fallbackMatches];
+    const now = new Date();
+
+    if (options?.upcoming) {
+      matches = matches
+        .filter(m => new Date(m.date) >= now)
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }
+    if (options?.past) {
+      matches = matches
+        .filter(m => new Date(m.date) < now)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+    if (options?.limit) {
+      matches = matches.slice(0, options.limit);
+    }
+
+    return matches;
+  },
+
   async getMatches(options?: {
     teamId?: string;
     upcoming?: boolean;
@@ -372,24 +397,7 @@ export const calendarService = {
     limit?: number;
   }): Promise<MatchDisplay[]> {
     if (!supabase) {
-      let matches = [...fallbackMatches];
-      const now = new Date();
-
-      if (options?.upcoming) {
-        matches = matches
-          .filter(m => new Date(m.date) >= now)
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      }
-      if (options?.past) {
-        matches = matches
-          .filter(m => new Date(m.date) < now)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      }
-      if (options?.limit) {
-        matches = matches.slice(0, options.limit);
-      }
-
-      return matches;
+      return this._filterFallback(options);
     }
 
     try {
@@ -414,11 +422,11 @@ export const calendarService = {
 
       if (error) {
         console.error('Error fetching matches:', error);
-        return fallbackMatches;
+        return this._filterFallback(options);
       }
 
       if (!data || data.length === 0) {
-        return fallbackMatches;
+        return this._filterFallback(options);
       }
 
       return data.map((match: Match) => ({
@@ -440,7 +448,7 @@ export const calendarService = {
       }));
     } catch (error) {
       console.error('Error in getMatches:', error);
-      return fallbackMatches;
+      return this._filterFallback(options);
     }
   },
 
