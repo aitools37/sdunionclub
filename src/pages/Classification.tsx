@@ -10,15 +10,15 @@ const Classification: React.FC = () => {
 
   const [isScraping, setIsScraping] = useState(false);
 
-  const fetchClassification = async () => {
+  const fetchClassification = async (autoScrapeIfEmpty = false) => {
     try {
       setLoading(true);
       setError(null);
 
       const classificationData = await classificationService.getClassification();
 
-      if (classificationData.length === 0) {
-        setClassification([]);
+      if (classificationData.length === 0 && autoScrapeIfEmpty) {
+        await handleScrapeRFCF();
         return;
       }
 
@@ -42,7 +42,10 @@ const Classification: React.FC = () => {
       const result = await classificationService.triggerScrape();
 
       if (result.success) {
-        await fetchClassification();
+        const classificationData = await classificationService.getClassification();
+        setClassification(classificationData);
+        const lastUpdate = await classificationService.getLastUpdateTime();
+        setLastUpdated(lastUpdate);
       } else {
         throw new Error(result.error || 'Error al actualizar datos');
       }
@@ -51,11 +54,12 @@ const Classification: React.FC = () => {
       setError(error instanceof Error ? error.message : 'Error desconocido');
     } finally {
       setIsScraping(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchClassification();
+    fetchClassification(true);
   }, []);
 
   const getResultIcon = (result: string) => {
@@ -230,23 +234,31 @@ const Classification: React.FC = () => {
             </div>
           ) : !loading && classification.length === 0 && !error ? (
             <div className="text-center py-16">
-              <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-secondary-700 mb-2">Sin datos de clasificacion</h3>
-              <p className="text-secondary-500 mb-6 max-w-md mx-auto">
-                Pulsa el boton para obtener los datos oficiales de la RFCF.
-              </p>
-              <button
-                onClick={handleScrapeRFCF}
-                disabled={isScraping}
-                className="inline-flex items-center space-x-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors font-medium"
-              >
-                {isScraping ? (
-                  <Loader className="w-5 h-5 animate-spin" />
-                ) : (
-                  <RefreshCw className="w-5 h-5" />
-                )}
-                <span>{isScraping ? 'Obteniendo datos...' : 'Actualizar clasificación'}</span>
-              </button>
+              {isScraping ? (
+                <>
+                  <Loader className="w-12 h-12 animate-spin text-primary-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-secondary-700 mb-2">Obteniendo clasificacion...</h3>
+                  <p className="text-secondary-500 max-w-md mx-auto">
+                    Cargando datos oficiales de la RFCF. Esto puede tardar unos segundos.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-secondary-700 mb-2">Sin datos de clasificacion</h3>
+                  <p className="text-secondary-500 mb-6 max-w-md mx-auto">
+                    Pulsa el boton para obtener los datos oficiales de la RFCF.
+                  </p>
+                  <button
+                    onClick={handleScrapeRFCF}
+                    disabled={isScraping}
+                    className="inline-flex items-center space-x-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors font-medium"
+                  >
+                    <RefreshCw className="w-5 h-5" />
+                    <span>Actualizar clasificacion</span>
+                  </button>
+                </>
+              )}
             </div>
           ) : classification.length > 0 ? (
             <>
