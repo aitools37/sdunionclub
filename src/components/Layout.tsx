@@ -1,32 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import ScrollToTop from './ScrollToTop';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const [showBanner, setShowBanner] = useState(true);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      
-      {/* Development Notice Banner */}
-      <div className="bg-warning-500 text-white py-6 px-6 border-b-4 border-warning-600">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-center space-y-3 md:space-y-0 md:space-x-6">
-          <AlertTriangle className="w-12 h-12 flex-shrink-0 animate-pulse" />
-          <div className="text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">🚧 PÁGINA WEB EN DESARROLLO 🚧</h2>
-            <p className="text-lg md:text-xl font-medium">
-            <strong>Aviso:</strong> Esta página web se encuentra en desarrollo y aún no está operativa. 
-            Los servicios de compra, registro y reservas no están disponibles por el momento.
-            </p>
+
+      {showBanner && (
+        <div className="bg-amber-500 text-white relative z-30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
+            <div className="flex items-center space-x-3 flex-1 justify-center">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+              <p className="text-sm font-medium">
+                Web en desarrollo - Los servicios de compra y registro no estan disponibles.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowBanner(false)}
+              className="ml-4 p-1 hover:bg-amber-600 rounded transition-colors flex-shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </div>
-      </div>
-      
+      )}
+
       <main className="flex-1">
         {children}
       </main>

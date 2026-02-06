@@ -15,6 +15,7 @@ export default {
           700: '#15803d',
           800: '#166534',
           900: '#14532d',
+          950: '#052e16',
         },
         secondary: {
           50: '#f8fafc',
@@ -27,6 +28,7 @@ export default {
           700: '#334155',
           800: '#1e293b',
           900: '#0f172a',
+          950: '#020617',
         },
         accent: {
           50: '#fef7f0',
@@ -61,6 +63,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Oswald', 'Inter', 'system-ui', 'sans-serif'],
       },
       spacing: {
         '18': '4.5rem',
@@ -69,7 +72,9 @@ export default {
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.5s ease-out',
+        'slide-down': 'slideDown 0.3s ease-out',
         'bounce-subtle': 'bounceSubtle 2s infinite',
+        'ticker': 'ticker 30s linear infinite',
       },
       keyframes: {
         fadeIn: {
@@ -80,9 +85,17 @@ export default {
           '0%': { transform: 'translateY(20px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
         },
+        slideDown: {
+          '0%': { transform: 'translateY(-10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
         bounceSubtle: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-5px)' },
+        },
+        ticker: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
         },
       },
     },
