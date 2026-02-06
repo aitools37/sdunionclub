@@ -18,7 +18,7 @@ const POSITION_COLORS: Record<string, { bg: string; text: string; accent: string
   DEF: { bg: 'from-blue-500 to-blue-700', text: 'text-blue-600', accent: 'bg-blue-500' },
   MED: { bg: 'from-green-500 to-emerald-700', text: 'text-green-600', accent: 'bg-green-500' },
   DEL: { bg: 'from-red-500 to-red-700', text: 'text-red-600', accent: 'bg-red-500' },
-  '': { bg: 'from-gray-500 to-gray-700', text: 'text-gray-600', accent: 'bg-gray-500' },
+  '': { bg: 'from-secondary-500 to-secondary-700', text: 'text-secondary-600', accent: 'bg-secondary-500' },
 };
 
 const PlayerCard: React.FC<{ player: Player; index: number }> = ({ player, index }) => {
@@ -135,6 +135,8 @@ const PlayerRoster: React.FC<PlayerRosterProps> = ({ teamSlug }) => {
 
   const grouped = playerService.groupByPosition(players);
   const positionsAvailable = Object.keys(grouped);
+  const namedPositions = positionsAvailable.filter(p => p !== '');
+  const hasEnoughPositions = namedPositions.length >= 2;
 
   const filteredPlayers = activeFilter === 'all'
     ? players
@@ -148,46 +150,48 @@ const PlayerRoster: React.FC<PlayerRosterProps> = ({ teamSlug }) => {
         </div>
         <div>
           <h2 className="text-2xl font-bold text-secondary-900">Plantilla 2025/26</h2>
-          <p className="text-sm text-secondary-500">{players.length} jugadores</p>
+          <p className="text-sm text-secondary-500">{players.length} jugadores inscritos</p>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-8">
-        <button
-          onClick={() => setActiveFilter('all')}
-          className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-            activeFilter === 'all'
-              ? 'bg-secondary-900 text-white shadow-md'
-              : 'bg-gray-100 text-secondary-600 hover:bg-gray-200'
-          }`}
-        >
-          Todos ({players.length})
-        </button>
-        {positionsAvailable.map(pos => {
-          const colors = POSITION_COLORS[pos] || POSITION_COLORS[''];
-          const label = POSITION_LABELS[pos] || pos;
-          const count = grouped[pos]?.length || 0;
-          return (
-            <button
-              key={pos}
-              onClick={() => setActiveFilter(pos)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                activeFilter === pos
-                  ? `${colors.accent} text-white shadow-md`
-                  : 'bg-gray-100 text-secondary-600 hover:bg-gray-200'
-              }`}
-            >
-              {label} ({count})
-            </button>
-          );
-        })}
-      </div>
+      {hasEnoughPositions && (
+        <div className="flex flex-wrap gap-2 mb-8">
+          <button
+            onClick={() => setActiveFilter('all')}
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+              activeFilter === 'all'
+                ? 'bg-secondary-900 text-white shadow-md'
+                : 'bg-gray-100 text-secondary-600 hover:bg-gray-200'
+            }`}
+          >
+            Todos ({players.length})
+          </button>
+          {namedPositions.map(pos => {
+            const colors = POSITION_COLORS[pos] || POSITION_COLORS[''];
+            const label = POSITION_LABELS[pos] || pos;
+            const count = grouped[pos]?.length || 0;
+            return (
+              <button
+                key={pos}
+                onClick={() => setActiveFilter(pos)}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                  activeFilter === pos
+                    ? `${colors.accent} text-white shadow-md`
+                    : 'bg-gray-100 text-secondary-600 hover:bg-gray-200'
+                }`}
+              >
+                {label} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      {activeFilter === 'all' ? (
+      {hasEnoughPositions && activeFilter === 'all' ? (
         Object.entries(grouped).map(([pos, posPlayers]) => (
           <div key={pos} className="mb-10">
             <div className="flex items-center gap-3 mb-4">
-              <div className={`w-1 h-8 rounded-full ${POSITION_COLORS[pos]?.accent || 'bg-gray-400'}`} />
+              <div className={`w-1 h-8 rounded-full ${POSITION_COLORS[pos]?.accent || 'bg-secondary-400'}`} />
               <h3 className="text-lg font-bold text-secondary-800">
                 {POSITION_LABELS[pos] || 'Jugadores'}
               </h3>
@@ -199,9 +203,15 @@ const PlayerRoster: React.FC<PlayerRosterProps> = ({ teamSlug }) => {
             </div>
           </div>
         ))
-      ) : (
+      ) : hasEnoughPositions ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-10">
           {filteredPlayers.map((player, idx) => (
+            <PlayerCard key={player.id} player={player} index={idx} />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-10">
+          {players.map((player, idx) => (
             <PlayerCard key={player.id} player={player} index={idx} />
           ))}
         </div>
