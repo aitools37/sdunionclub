@@ -15,12 +15,10 @@ const Classification: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      console.log('Fetching classification data from Supabase...');
-
       const classificationData = await classificationService.getClassification();
 
       if (classificationData.length === 0) {
-        setError('No hay datos de clasificación disponibles. Haz clic en "Actualizar desde RFCF" para obtener los datos más recientes.');
+        setClassification([]);
         return;
       }
 
@@ -28,12 +26,9 @@ const Classification: React.FC = () => {
 
       const lastUpdate = await classificationService.getLastUpdateTime();
       setLastUpdated(lastUpdate);
-
-      console.log('✅ Classification data loaded from database:', classificationData.length, 'teams');
     } catch (error) {
       console.error('Error fetching classification:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      setError(`Error al cargar la clasificación: ${errorMessage}`);
+      setError(error instanceof Error ? error.message : 'Error desconocido');
     } finally {
       setLoading(false);
     }
@@ -44,19 +39,16 @@ const Classification: React.FC = () => {
       setIsScraping(true);
       setError(null);
 
-      console.log('Triggering RFCF scrape...');
       const result = await classificationService.triggerScrape();
 
       if (result.success) {
-        console.log('✅ Scrape completed successfully');
         await fetchClassification();
       } else {
         throw new Error(result.error || 'Error al actualizar datos');
       }
     } catch (error) {
       console.error('Error scraping RFCF:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      setError(`Error al actualizar desde RFCF: ${errorMessage}`);
+      setError(error instanceof Error ? error.message : 'Error desconocido');
     } finally {
       setIsScraping(false);
     }
@@ -127,10 +119,6 @@ const Classification: React.FC = () => {
         {/* Our Team Highlight */}
         {ourTeam && (
           <div className="mb-8 p-6 bg-primary-50 rounded-lg border-l-4 border-primary-600">
-            <div className="mb-4 text-sm text-secondary-600">
-              <strong>✅ Datos oficiales de la RFCF:</strong> La información se obtiene directamente desde la página oficial de la Real Federación Cántabra de Fútbol.
-              Todos los datos (puntos, partidos, goles, etc.) son oficiales y actualizados.
-            </div>
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-primary-900 mb-2">
@@ -238,6 +226,26 @@ const Classification: React.FC = () => {
                 className="text-primary-600 hover:text-primary-700 font-medium"
               >
                 Intentar de nuevo
+              </button>
+            </div>
+          ) : !loading && classification.length === 0 && !error ? (
+            <div className="text-center py-16">
+              <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-secondary-700 mb-2">Sin datos de clasificacion</h3>
+              <p className="text-secondary-500 mb-6 max-w-md mx-auto">
+                Pulsa el boton para obtener los datos oficiales de la RFCF.
+              </p>
+              <button
+                onClick={handleScrapeRFCF}
+                disabled={isScraping}
+                className="inline-flex items-center space-x-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors font-medium"
+              >
+                {isScraping ? (
+                  <Loader className="w-5 h-5 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-5 h-5" />
+                )}
+                <span>{isScraping ? 'Obteniendo datos...' : 'Actualizar desde RFCF'}</span>
               </button>
             </div>
           ) : classification.length > 0 ? (
