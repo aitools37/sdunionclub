@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Clock, MapPin, Ticket, Trophy, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { OUR_TEAM_NAME, OUR_TEAM_LOGO, getOpponentLogo } from '../lib/team';
 
 export interface MatchData {
   id: string | number;
@@ -71,7 +72,7 @@ const MatchCard: React.FC<MatchCardProps> = ({
                 )}
               </div>
               <p className="font-semibold text-secondary-900">
-                {match.isHome ? 'UCA' : match.opponent} vs {match.isHome ? match.opponent : 'UCA'}
+                {match.isHome ? OUR_TEAM_NAME : match.opponent} vs {match.isHome ? match.opponent : OUR_TEAM_NAME}
               </p>
               <div className="flex items-center space-x-3 text-sm text-secondary-500 mt-1">
                 <span className="capitalize">{formatDate(match.date)}</span>
@@ -129,13 +130,9 @@ const MatchCard: React.FC<MatchCardProps> = ({
             <div className="flex flex-col items-center space-y-2 flex-1">
               <div className="w-20 h-20 bg-white rounded-full p-2 shadow-lg">
                 {match.isHome ? (
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/en/0/01/Uni%C3%B3n_Club_Astillero.png"
-                    alt="UCA"
-                    className="w-full h-full object-contain"
-                  />
-                ) : match.opponentLogo ? (
-                  <img src={match.opponentLogo} alt={match.opponent} className="w-full h-full object-contain" />
+                  <img src={OUR_TEAM_LOGO} alt={OUR_TEAM_NAME} className="w-full h-full object-contain" />
+                ) : (match.opponentLogo || getOpponentLogo(match.opponent)) ? (
+                  <img src={match.opponentLogo || getOpponentLogo(match.opponent)} alt={match.opponent} className="w-full h-full object-contain" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-gray-400">
                     {match.opponent.charAt(0)}
@@ -143,7 +140,7 @@ const MatchCard: React.FC<MatchCardProps> = ({
                 )}
               </div>
               <span className="font-bold text-lg">
-                {match.isHome ? 'UCA' : match.opponent.split(' ').slice(-1)[0]}
+                {match.isHome ? OUR_TEAM_NAME : match.opponent}
               </span>
             </div>
 
@@ -163,13 +160,9 @@ const MatchCard: React.FC<MatchCardProps> = ({
             <div className="flex flex-col items-center space-y-2 flex-1">
               <div className="w-20 h-20 bg-white rounded-full p-2 shadow-lg">
                 {!match.isHome ? (
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/en/0/01/Uni%C3%B3n_Club_Astillero.png"
-                    alt="UCA"
-                    className="w-full h-full object-contain"
-                  />
-                ) : match.opponentLogo ? (
-                  <img src={match.opponentLogo} alt={match.opponent} className="w-full h-full object-contain" />
+                  <img src={OUR_TEAM_LOGO} alt={OUR_TEAM_NAME} className="w-full h-full object-contain" />
+                ) : (match.opponentLogo || getOpponentLogo(match.opponent)) ? (
+                  <img src={match.opponentLogo || getOpponentLogo(match.opponent)} alt={match.opponent} className="w-full h-full object-contain" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-gray-400">
                     {match.opponent.charAt(0)}
@@ -177,7 +170,7 @@ const MatchCard: React.FC<MatchCardProps> = ({
                 )}
               </div>
               <span className="font-bold text-lg">
-                {!match.isHome ? 'UCA' : match.opponent.split(' ').slice(-1)[0]}
+                {!match.isHome ? OUR_TEAM_NAME : match.opponent}
               </span>
             </div>
           </div>
@@ -235,13 +228,17 @@ const MatchCard: React.FC<MatchCardProps> = ({
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3 flex-1">
             <div className="w-12 h-12 bg-gray-100 rounded-full p-1 flex-shrink-0">
-              <img
-                src="https://upload.wikimedia.org/wikipedia/en/0/01/Uni%C3%B3n_Club_Astillero.png"
-                alt="UCA"
-                className="w-full h-full object-contain"
-              />
+              {match.isHome ? (
+                <img src={OUR_TEAM_LOGO} alt={OUR_TEAM_NAME} className="w-full h-full object-contain" />
+              ) : (match.opponentLogo || getOpponentLogo(match.opponent)) ? (
+                <img src={(match.opponentLogo || getOpponentLogo(match.opponent))!} alt={match.opponent} className="w-full h-full object-contain" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-lg font-bold text-gray-400">
+                  {match.opponent.charAt(0)}
+                </div>
+              )}
             </div>
-            <span className="font-bold text-secondary-900">UCA</span>
+            <span className="font-bold text-secondary-900">{match.isHome ? OUR_TEAM_NAME : match.opponent}</span>
           </div>
 
           <div className="px-4">
@@ -258,12 +255,16 @@ const MatchCard: React.FC<MatchCardProps> = ({
           </div>
 
           <div className="flex items-center space-x-3 flex-1 justify-end">
-            <span className="font-bold text-secondary-900 text-right">{match.opponent}</span>
+            <span className="font-bold text-secondary-900 text-right">{match.isHome ? match.opponent : OUR_TEAM_NAME}</span>
             <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-              {match.opponentLogo ? (
-                <img src={match.opponentLogo} alt={match.opponent} className="w-10 h-10 object-contain" />
+              {match.isHome ? (
+                (match.opponentLogo || getOpponentLogo(match.opponent)) ? (
+                  <img src={(match.opponentLogo || getOpponentLogo(match.opponent))!} alt={match.opponent} className="w-10 h-10 object-contain" />
+                ) : (
+                  <span className="text-xl font-bold text-gray-400">{match.opponent.charAt(0)}</span>
+                )
               ) : (
-                <span className="text-xl font-bold text-gray-400">{match.opponent.charAt(0)}</span>
+                <img src={OUR_TEAM_LOGO} alt={OUR_TEAM_NAME} className="w-10 h-10 object-contain" />
               )}
             </div>
           </div>

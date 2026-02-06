@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Ticket } from 'lucide-react';
 import { calendarService, MatchDisplay } from '../services/calendarService';
+import { OUR_TEAM_NAME } from '../lib/team';
 
 const MatchTicker: React.FC = () => {
   const [matches, setMatches] = useState<MatchDisplay[]>([]);
@@ -50,12 +51,15 @@ const MatchTicker: React.FC = () => {
           <div className="flex items-center space-x-6">
             {matches.map((match) => {
               const isPast = new Date(match.date) < new Date();
+              const truncate = (name: string, max: number) => name.length > max ? name.slice(0, max) + '...' : name;
+              const homeName = match.isHome ? OUR_TEAM_NAME : truncate(match.opponent, 14);
+              const awayName = match.isHome ? truncate(match.opponent, 14) : OUR_TEAM_NAME;
               return (
                 <div key={match.id} className="flex items-center space-x-3 whitespace-nowrap">
                   <span className="text-xs text-secondary-400 capitalize">{formatDate(match.date)}</span>
                   <div className="flex items-center space-x-2">
                     <span className={`text-sm font-semibold ${match.isHome ? 'text-white' : 'text-secondary-300'}`}>
-                      {match.isHome ? 'UCA' : match.opponent.length > 12 ? match.opponent.slice(0, 12) + '...' : match.opponent}
+                      {homeName}
                     </span>
                     {isPast && match.result ? (
                       <span className={`text-sm font-bold ${getResultColor(match.result, match.isHome)}`}>
@@ -67,7 +71,7 @@ const MatchTicker: React.FC = () => {
                       </span>
                     )}
                     <span className={`text-sm font-semibold ${!match.isHome ? 'text-white' : 'text-secondary-300'}`}>
-                      {!match.isHome ? 'UCA' : match.opponent.length > 12 ? match.opponent.slice(0, 12) + '...' : match.opponent}
+                      {awayName}
                     </span>
                   </div>
                   <div className="w-px h-4 bg-secondary-700 ml-3" />

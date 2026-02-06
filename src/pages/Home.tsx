@@ -14,6 +14,7 @@ import SocialFeed from '../components/SocialFeed';
 import { calendarService, MatchDisplay } from '../services/calendarService';
 import { fetchInstagramPosts, convertInstagramPostsToNews } from '../services/instagramService';
 import { classificationService } from '../services/classificationService';
+import { OUR_TEAM_NAME, OUR_TEAM_LOGO, getOpponentLogo } from '../lib/team';
 
 const Home: React.FC = () => {
   const [nextMatch, setNextMatch] = useState<MatchDisplay | null>(null);
@@ -197,14 +198,18 @@ const Home: React.FC = () => {
                     <div className="flex items-center justify-between mb-8">
                       <div className="flex flex-col items-center space-y-3 flex-1">
                         <div className="w-20 h-20 bg-white rounded-xl p-2">
-                          <img
-                            src="https://upload.wikimedia.org/wikipedia/en/0/01/Uni%C3%B3n_Club_Astillero.png"
-                            alt="UCA"
-                            className="w-full h-full object-contain"
-                          />
+                          {nextMatch.isHome ? (
+                            <img src={OUR_TEAM_LOGO} alt={OUR_TEAM_NAME} className="w-full h-full object-contain" />
+                          ) : getOpponentLogo(nextMatch.opponent) ? (
+                            <img src={getOpponentLogo(nextMatch.opponent)} alt={nextMatch.opponent} className="w-full h-full object-contain" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-gray-400">
+                              {nextMatch.opponent.charAt(0)}
+                            </div>
+                          )}
                         </div>
                         <span className="text-white font-bold text-sm">
-                          {nextMatch.isHome ? 'UCA' : nextMatch.opponent.split(' ').slice(0, 2).join(' ')}
+                          {nextMatch.isHome ? OUR_TEAM_NAME : nextMatch.opponent}
                         </span>
                       </div>
                       <div className="px-6 text-center">
@@ -212,13 +217,19 @@ const Home: React.FC = () => {
                         <div className="font-display text-3xl font-bold text-white">{nextMatch.time}h</div>
                       </div>
                       <div className="flex flex-col items-center space-y-3 flex-1">
-                        <div className="w-20 h-20 bg-white/10 rounded-xl flex items-center justify-center">
-                          <span className="text-3xl font-bold text-white/60">
-                            {(nextMatch.isHome ? nextMatch.opponent : 'UCA').charAt(0)}
-                          </span>
+                        <div className="w-20 h-20 bg-white/10 rounded-xl p-2 flex items-center justify-center">
+                          {!nextMatch.isHome ? (
+                            <img src={OUR_TEAM_LOGO} alt={OUR_TEAM_NAME} className="w-full h-full object-contain" />
+                          ) : getOpponentLogo(nextMatch.opponent) ? (
+                            <img src={getOpponentLogo(nextMatch.opponent)} alt={nextMatch.opponent} className="w-full h-full object-contain" />
+                          ) : (
+                            <span className="text-3xl font-bold text-white/60">
+                              {nextMatch.opponent.charAt(0)}
+                            </span>
+                          )}
                         </div>
                         <span className="text-white font-bold text-sm">
-                          {nextMatch.isHome ? nextMatch.opponent.split(' ').slice(0, 2).join(' ') : 'UCA'}
+                          {!nextMatch.isHome ? OUR_TEAM_NAME : nextMatch.opponent}
                         </span>
                       </div>
                     </div>
@@ -396,7 +407,7 @@ const Home: React.FC = () => {
                               <span className="text-xs text-secondary-400">{match.competition}</span>
                             </div>
                             <p className="font-semibold text-secondary-900">
-                              {match.isHome ? 'UCA' : match.opponent} vs {match.isHome ? match.opponent : 'UCA'}
+                              {match.isHome ? OUR_TEAM_NAME : match.opponent} vs {match.isHome ? match.opponent : OUR_TEAM_NAME}
                             </p>
                             <div className="flex items-center space-x-3 text-xs text-secondary-400 mt-1">
                               <span className="capitalize">{formatMatchDate(match.date)}</span>
@@ -441,7 +452,7 @@ const Home: React.FC = () => {
                         <div className="text-xs text-secondary-400 capitalize mb-3">{formatMatchDate(match.date)}</div>
                         <div className="flex items-center justify-center space-x-3 mb-3">
                           <span className={`font-bold ${match.isHome ? 'text-secondary-900' : 'text-secondary-500'}`}>
-                            {match.isHome ? 'UCA' : match.opponent.split(' ').slice(0, 2).join(' ')}
+                            {match.isHome ? OUR_TEAM_NAME : match.opponent}
                           </span>
                           {match.result && (
                             <span
@@ -451,7 +462,7 @@ const Home: React.FC = () => {
                             </span>
                           )}
                           <span className={`font-bold ${!match.isHome ? 'text-secondary-900' : 'text-secondary-500'}`}>
-                            {match.isHome ? match.opponent.split(' ').slice(0, 2).join(' ') : 'UCA'}
+                            {match.isHome ? match.opponent : OUR_TEAM_NAME}
                           </span>
                         </div>
                         <div className="text-xs text-secondary-400">{match.venue}</div>
