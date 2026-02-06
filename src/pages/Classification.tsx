@@ -197,7 +197,7 @@ const Classification: React.FC = () => {
               <span>Actualizar desde RFCF</span>
             </button>
             <a
-              href="https://www.rfcf.es/pnfg/NPcd/NFG_VisClasificacion?cod_primaria=1000120&codcompeticion=22119651&codgrupo=22119687&cod_agrupacion=1"
+              href="https://www.rfcf.es/pnfg/NPcd/NFG_VisClasificacion?cod_primaria=1000120&codcompeticion=22119651&codgrupo=22119686&cod_agrupacion=1"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center space-x-2 px-4 py-2 bg-secondary-600 text-white rounded-lg hover:bg-secondary-700 transition-colors"

@@ -18,18 +18,9 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const parseBotApiKey = Deno.env.get('PARSEBOT_API_KEY');
-    
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('🚀 Starting RFCF classification scrape via Parse.bot...');
-    console.log('🔑 API Key present:', !!parseBotApiKey);
-    console.log('🔑 API Key length:', parseBotApiKey?.length || 0);
-
-    if (!parseBotApiKey) {
-      throw new Error('PARSEBOT_API_KEY not configured in Supabase secrets');
-    }
-
-    // Get active competition
     const { data: competition, error: compError } = await supabase
       .from('competitions')
       .select('*')
@@ -40,108 +31,54 @@ Deno.serve(async (req: Request) => {
       throw new Error('No active competition found');
     }
 
-    console.log('🏆 Active competition:', competition.name);
+    const rfcfUrl = `https://www.rfcf.es/pnfg/NPcd/NFG_VisClasificacion?cod_primaria=1000120&codcompeticion=${competition.rfcf_competition_code}&codgrupo=${competition.rfcf_group_code}&cod_agrupacion=1`;
 
-    // Call Parse.bot API
-    const parseBotUrl = 'https://api.parse.bot/scraper/60aee77f-422f-429b-ba22-26756d847d81/run';
-    
-    console.log('📡 Calling Parse.bot API...');
-    console.log('📡 URL:', parseBotUrl);
+    console.log('RFCF URL:', rfcfUrl);
 
-    const parseBotResponse = await fetch(parseBotUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': parseBotApiKey,
-      },
-      body: JSON.stringify({ count: 1 }),
-    });
-
-    console.log('📥 Parse.bot response status:', parseBotResponse.status);
-
-    if (!parseBotResponse.ok) {
-      const errorText = await parseBotResponse.text();
-      console.error('❌ Parse.bot error response:', errorText);
-      throw new Error(`Parse.bot API error: ${parseBotResponse.status} - ${errorText}`);
-    }
-
-    const parseBotData = await parseBotResponse.json();
-    
-    console.log('📦 Parse.bot full response:', JSON.stringify(parseBotData, null, 2));
-
-    // Parse.bot puede devolver diferentes estructuras de datos
-    // Intentemos detectar automáticamente la estructura
     let teams: any[] = [];
-    
-    // Caso 1: data.teams
-    if (parseBotData.data?.teams && Array.isArray(parseBotData.data.teams)) {
-      teams = parseBotData.data.teams;
-      console.log('✅ Found teams in data.teams');
-    }
-    // Caso 2: results (array directo)
-    else if (parseBotData.results && Array.isArray(parseBotData.results)) {
-      teams = parseBotData.results;
-      console.log('✅ Found teams in results');
-    }
-    // Caso 3: data es array directo
-    else if (Array.isArray(parseBotData.data)) {
-      teams = parseBotData.data;
-      console.log('✅ Found teams in data (array)');
-    }
-    // Caso 4: respuesta es array directo
-    else if (Array.isArray(parseBotData)) {
-      teams = parseBotData;
-      console.log('✅ Found teams in root (array)');
-    }
-    // Caso 5: el primer campo del objeto es un array
-    else {
-      const firstKey = Object.keys(parseBotData)[0];
-      if (firstKey && Array.isArray(parseBotData[firstKey])) {
-        teams = parseBotData[firstKey];
-        console.log(`✅ Found teams in ${firstKey}`);
+
+    if (parseBotApiKey) {
+      try {
+        teams = await fetchFromParseBot(parseBotApiKey, rfcfUrl);
+        console.log('Parse.bot returned', teams.length, 'teams');
+      } catch (e) {
+        console.error('Parse.bot failed:', e);
+        console.log('Falling back to direct RFCF scrape...');
       }
     }
 
     if (teams.length === 0) {
-      console.error('❌ No teams found in Parse.bot response');
-      throw new Error('No teams data received from Parse.bot');
+      teams = await scrapeRFCFDirectly(rfcfUrl);
+      console.log('Direct scrape returned', teams.length, 'teams');
     }
 
-    console.log(`📊 Processing ${teams.length} teams...`);
-    console.log('📊 First team sample:', JSON.stringify(teams[0], null, 2));
+    if (teams.length === 0) {
+      throw new Error('Could not retrieve classification data from any source');
+    }
 
-    // Detectar los nombres de los campos automáticamente
-    const firstTeam = teams[0];
-    const fieldMapping = detectFieldMapping(firstTeam);
-    console.log('🗺️ Field mapping detected:', fieldMapping);
-
-    // Store teams and standings in database
     const totalTeams = teams.length;
     let processedCount = 0;
 
     for (let i = 0; i < teams.length; i++) {
-      const team = teams[i];
-      
+      const t = teams[i];
+
       try {
-        // Extract and clean team data usando el mapping detectado
-        const teamName = String(team[fieldMapping.name] || `Team ${i + 1}`).trim();
-        const position = parseInt(String(team[fieldMapping.position] || i + 1));
-        const points = parseInt(String(team[fieldMapping.points] || 0));
-        const played = parseInt(String(team[fieldMapping.played] || 0));
-        const won = parseInt(String(team[fieldMapping.won] || 0));
-        const drawn = parseInt(String(team[fieldMapping.drawn] || 0));
-        const lost = parseInt(String(team[fieldMapping.lost] || 0));
-        const goalsFor = parseInt(String(team[fieldMapping.goalsFor] || 0));
-        const goalsAgainst = parseInt(String(team[fieldMapping.goalsAgainst] || 0));
-        const goalDifference = parseInt(String(team[fieldMapping.goalDifference] || (goalsFor - goalsAgainst)));
-        const form = String(team[fieldMapping.form] || '').slice(-5);
+        const teamName = String(t.name || `Team ${i + 1}`).trim();
+        const position = parseInt(String(t.position || i + 1));
+        const points = parseInt(String(t.points || 0));
+        const played = parseInt(String(t.played || 0));
+        const won = parseInt(String(t.won || 0));
+        const drawn = parseInt(String(t.drawn || 0));
+        const lost = parseInt(String(t.lost || 0));
+        const goalsFor = parseInt(String(t.goalsFor || 0));
+        const goalsAgainst = parseInt(String(t.goalsAgainst || 0));
+        const goalDifference = goalsFor - goalsAgainst;
+        const form = String(t.form || '');
 
         console.log(`  ${position}. ${teamName} - ${points} pts`);
 
-        // Check if this is S.D. Union Club
         const isOurTeam = teamName.toLowerCase().includes('union');
 
-        // Insert or update team
         const { data: teamData, error: teamError } = await supabase
           .from('teams')
           .upsert({
@@ -156,31 +93,29 @@ Deno.serve(async (req: Request) => {
           .maybeSingle();
 
         if (teamError || !teamData) {
-          console.error('  ❌ Error upserting team:', teamName, teamError);
+          console.error('Error upserting team:', teamName, teamError);
           continue;
         }
 
-        // Determine position flags
         const isPromoted = position === 1;
         const isPlayoff = position >= 2 && position <= 3;
         const isRelegated = position > totalTeams - 3;
 
-        // Insert or update standing
         const { error: standingError } = await supabase
           .from('classification_standings')
           .upsert({
             competition_id: competition.id,
             team_id: teamData.id,
-            position: position,
-            points: points,
-            played: played,
-            won: won,
-            drawn: drawn,
-            lost: lost,
+            position,
+            points,
+            played,
+            won,
+            drawn,
+            lost,
             goals_for: goalsFor,
             goals_against: goalsAgainst,
             goal_difference: goalDifference,
-            form: form,
+            form,
             is_promoted: isPromoted,
             is_playoff: isPlayoff,
             is_relegated: isRelegated,
@@ -191,67 +126,205 @@ Deno.serve(async (req: Request) => {
           });
 
         if (standingError) {
-          console.error('  ❌ Error upserting standing:', teamName, standingError);
+          console.error('Error upserting standing:', teamName, standingError);
         } else {
           processedCount++;
         }
       } catch (teamError) {
-        console.error(`  ❌ Error processing team ${i + 1}:`, teamError);
+        console.error(`Error processing team ${i + 1}:`, teamError);
       }
     }
-
-    console.log(`✅ Classification data updated: ${processedCount}/${teams.length} teams`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Classification data updated from RFCF via Parse.bot',
+        message: `Classification updated: ${processedCount}/${totalTeams} teams`,
         teams: processedCount,
-        total: teams.length,
+        total: totalTeams,
         timestamp: new Date().toISOString(),
       }),
       {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    console.error('❌ Error in scrape function:', error);
+    console.error('Error:', error);
     return new Response(
       JSON.stringify({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
-        details: error instanceof Error ? error.stack : undefined,
       }),
       {
         status: 500,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   }
 });
 
-// Detecta automáticamente los nombres de los campos en el objeto
+async function fetchFromParseBot(apiKey: string, rfcfUrl: string): Promise<any[]> {
+  const parseBotUrl = 'https://api.parse.bot/scraper/60aee77f-422f-429b-ba22-26756d847d81/run';
+
+  const response = await fetch(parseBotUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-Key': apiKey,
+    },
+    body: JSON.stringify({ url: rfcfUrl, count: 1 }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Parse.bot ${response.status}: ${errText}`);
+  }
+
+  const data = await response.json();
+  console.log('Parse.bot raw response keys:', Object.keys(data));
+
+  let rawTeams: any[] = [];
+
+  if (data.data?.teams && Array.isArray(data.data.teams)) {
+    rawTeams = data.data.teams;
+  } else if (data.results && Array.isArray(data.results)) {
+    rawTeams = data.results;
+  } else if (Array.isArray(data.data)) {
+    rawTeams = data.data;
+  } else if (Array.isArray(data)) {
+    rawTeams = data;
+  } else {
+    for (const key of Object.keys(data)) {
+      if (Array.isArray(data[key]) && data[key].length > 3) {
+        rawTeams = data[key];
+        break;
+      }
+    }
+  }
+
+  if (rawTeams.length === 0) return [];
+
+  console.log('Parse.bot first team sample:', JSON.stringify(rawTeams[0]));
+
+  const mapping = detectFieldMapping(rawTeams[0]);
+  return rawTeams.map((t: any, i: number) => ({
+    position: t[mapping.position] || i + 1,
+    name: t[mapping.name] || `Team ${i + 1}`,
+    points: t[mapping.points] || 0,
+    played: t[mapping.played] || 0,
+    won: t[mapping.won] || 0,
+    drawn: t[mapping.drawn] || 0,
+    lost: t[mapping.lost] || 0,
+    goalsFor: t[mapping.goalsFor] || 0,
+    goalsAgainst: t[mapping.goalsAgainst] || 0,
+    form: t[mapping.form] || '',
+  }));
+}
+
+async function scrapeRFCFDirectly(rfcfUrl: string): Promise<any[]> {
+  console.log('Fetching RFCF page directly...');
+
+  const response = await fetch(rfcfUrl, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'es-ES,es;q=0.9',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`RFCF returned ${response.status}`);
+  }
+
+  const html = await response.text();
+  console.log('RFCF page size:', html.length, 'bytes');
+
+  return parseRFCFClassificationHTML(html);
+}
+
+function parseRFCFClassificationHTML(html: string): any[] {
+  const teams: any[] = [];
+
+  const tableMatch = html.match(/<table[^>]*class="[^"]*tabla_resultados[^"]*"[^>]*>([\s\S]*?)<\/table>/i)
+    || html.match(/<table[^>]*id="[^"]*clasif[^"]*"[^>]*>([\s\S]*?)<\/table>/i)
+    || html.match(/<table[^>]*>([\s\S]*?)<\/table>/gi);
+
+  if (!tableMatch) {
+    console.log('No classification table found in HTML');
+    const snippet = html.substring(0, 2000);
+    console.log('HTML start:', snippet);
+    return [];
+  }
+
+  const tableHtml = Array.isArray(tableMatch) ? findClassificationTable(tableMatch) : tableMatch[1];
+  if (!tableHtml) return [];
+
+  const rows = tableHtml.match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi) || [];
+  console.log('Found', rows.length, 'rows in table');
+
+  let dataRowStart = 0;
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].includes('<th')) {
+      dataRowStart = i + 1;
+    }
+  }
+
+  for (let i = dataRowStart; i < rows.length; i++) {
+    const row = rows[i];
+    const cells = (row.match(/<td[^>]*>([\s\S]*?)<\/td>/gi) || []).map(
+      (cell: string) => cell.replace(/<[^>]+>/g, '').trim()
+    );
+
+    if (cells.length < 8) continue;
+
+    const position = parseInt(cells[0]) || (teams.length + 1);
+    const name = cells[1]?.trim();
+
+    if (!name || name === '') continue;
+
+    teams.push({
+      position,
+      name,
+      points: parseInt(cells[2]) || 0,
+      played: parseInt(cells[3]) || 0,
+      won: parseInt(cells[4]) || 0,
+      drawn: parseInt(cells[5]) || 0,
+      lost: parseInt(cells[6]) || 0,
+      goalsFor: parseInt(cells[7]) || 0,
+      goalsAgainst: parseInt(cells[8]) || 0,
+      form: '',
+    });
+  }
+
+  console.log('Parsed', teams.length, 'teams from RFCF HTML');
+  return teams;
+}
+
+function findClassificationTable(tables: string[]): string | null {
+  for (const table of tables) {
+    const rowCount = (table.match(/<tr/gi) || []).length;
+    if (rowCount >= 10 && (table.includes('Equipo') || table.includes('equipo') || table.includes('Puntos') || table.includes('PJ') || table.includes('Pts'))) {
+      return table;
+    }
+  }
+  for (const table of tables) {
+    const rowCount = (table.match(/<tr/gi) || []).length;
+    if (rowCount >= 10) return table;
+  }
+  return null;
+}
+
 function detectFieldMapping(obj: any): Record<string, string> {
-  const keys = Object.keys(obj).map(k => k.toLowerCase());
-  
   return {
-    position: findKey(obj, ['position', 'pos', 'rank', 'ranking', 'posicion']),
+    position: findKey(obj, ['position', 'pos', 'rank', 'posicion']),
     name: findKey(obj, ['team', 'name', 'equipo', 'club', 'teamname', 'team_name']),
-    points: findKey(obj, ['points', 'pts', 'puntos', 'pt']),
-    played: findKey(obj, ['played', 'pj', 'matches', 'games', 'partidos', 'partidosjugados']),
-    won: findKey(obj, ['won', 'w', 'g', 'wins', 'ganados', 'victories']),
-    drawn: findKey(obj, ['drawn', 'd', 'e', 'draws', 'ties', 'empates', 'empatados']),
-    lost: findKey(obj, ['lost', 'l', 'p', 'losses', 'perdidos', 'defeats']),
-    goalsFor: findKey(obj, ['goalsfor', 'gf', 'golesfavor', 'golesmarcados', 'for', 'golesafavor']),
-    goalsAgainst: findKey(obj, ['goalsagainst', 'ga', 'gc', 'golescontra', 'golesrecibidos', 'against', 'golesencontra']),
-    goalDifference: findKey(obj, ['goaldifference', 'gd', 'dif', 'diff', 'difference', 'diferencia']),
-    form: findKey(obj, ['form', 'streak', 'racha', 'ultimos', 'recent']),
+    points: findKey(obj, ['points', 'pts', 'puntos']),
+    played: findKey(obj, ['played', 'pj', 'matches', 'games', 'partidos']),
+    won: findKey(obj, ['won', 'w', 'g', 'wins', 'ganados']),
+    drawn: findKey(obj, ['drawn', 'd', 'e', 'draws', 'empates']),
+    lost: findKey(obj, ['lost', 'l', 'p', 'losses', 'perdidos']),
+    goalsFor: findKey(obj, ['goalsfor', 'gf', 'golesfavor']),
+    goalsAgainst: findKey(obj, ['goalsagainst', 'ga', 'gc', 'golescontra']),
+    form: findKey(obj, ['form', 'streak', 'racha', 'ultimos']),
   };
 }
 
@@ -261,6 +334,5 @@ function findKey(obj: any, possibilities: string[]): string {
     const found = keys.find(k => k.toLowerCase().replace(/[_\s-]/g, '') === possibility.replace(/[_\s-]/g, ''));
     if (found) return found;
   }
-  // Si no encuentra, devolver el primer candidato como fallback
   return possibilities[0];
 }
