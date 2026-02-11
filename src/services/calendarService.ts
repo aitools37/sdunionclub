@@ -118,7 +118,7 @@ export const calendarService = {
         opponent: match.opponent,
         opponentLogo: match.opponent_logo,
         date: match.match_date,
-        time: match.match_time,
+        time: match.match_time ? match.match_time.slice(0, 5) : '17:00',
         venue: match.venue,
         competition: 'Segunda Regional Grupo C',
         isHome: match.is_home,
