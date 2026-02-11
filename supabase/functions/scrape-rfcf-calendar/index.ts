@@ -2,7 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
@@ -24,7 +24,7 @@ interface ParsedMatch {
   status: 'scheduled' | 'finished' | 'postponed';
 }
 
-const OUR_TEAM_PATTERNS = ['sd unión club', 'sd union club', 'unión club', 'union club', 's.d. unión', 's.d. union'];
+const OUR_TEAM_PATTERNS = ['sd unión club', 'sd union club', 'unión club', 'union club', 's.d. unión', 's.d. union', 'sduc astillero', 'sduc-astillero'];
 
 function isOurTeam(name: string): boolean {
   const lower = name.toLowerCase();
@@ -64,7 +64,7 @@ Deno.serve(async (req: Request) => {
 
     let allMatches: ParsedMatch[] = [];
 
-    for (let jornada = 1; jornada <= 24; jornada++) {
+    for (let jornada = 1; jornada <= 26; jornada++) {
       try {
         const url = `https://www.resultados-futbol.com/competicion/segunda_regional_cantabria/${seasonYear}/${groupSlug}/jornada${jornada}`;
 
@@ -174,12 +174,23 @@ function parseJornadaPage(html: string, matchday: number): ParsedMatch[] {
     if (teamNames.length < 2) continue;
 
     const scoreMatch = row.match(/>(\d+)\s*-\s*(\d+)</);
-    const dateMatch = row.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    const timeMatch = row.match(/(\d{1,2}:\d{2})/);
 
     let date = '';
-    if (dateMatch) {
-      date = `${dateMatch[3]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[1].padStart(2, '0')}`;
+    let time = '17:00';
+
+    const isoMatch = row.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    if (isoMatch) {
+      date = `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+      time = `${isoMatch[4]}:${isoMatch[5]}`;
+    } else {
+      const slashDate = row.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (slashDate) {
+        date = `${slashDate[3]}-${slashDate[2].padStart(2, '0')}-${slashDate[1].padStart(2, '0')}`;
+      }
+      const timeMatch = row.match(/(\d{1,2}:\d{2})/);
+      if (timeMatch) {
+        time = timeMatch[1];
+      }
     }
 
     const homeTeam = teamNames[0];
@@ -190,7 +201,7 @@ function parseJornadaPage(html: string, matchday: number): ParsedMatch[] {
     matches.push({
       matchday,
       date,
-      time: timeMatch ? timeMatch[1] : '17:00',
+      time,
       homeTeam,
       awayTeam,
       homeScore: scoreMatch ? parseInt(scoreMatch[1]) : undefined,
