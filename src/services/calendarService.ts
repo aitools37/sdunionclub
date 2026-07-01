@@ -46,7 +46,58 @@ export interface MatchDisplay {
   matchday?: number;
 }
 
-const fallbackMatches: MatchDisplay[] = [];
+const fallbackMatches: MatchDisplay[] = [
+  {
+    id: 'fb-1',
+    opponent: 'Nueva Montaña',
+    date: '2024-03-22',
+    time: '17:00',
+    venue: 'La Planchada',
+    competition: 'Segunda Regional Grupo C',
+    isHome: true,
+    status: 'scheduled',
+    matchday: 24,
+  },
+  {
+    id: 'fb-2',
+    opponent: 'Samano B',
+    date: '2024-03-20',
+    time: '17:00',
+    venue: 'Campo Samano',
+    competition: 'Segunda Regional Grupo C',
+    isHome: false,
+    result: '2-1',
+    homeScore: 2,
+    awayScore: 1,
+    status: 'finished',
+    matchday: 23,
+  },
+  {
+    id: 'fb-3',
+    opponent: 'CD Pontejos',
+    date: '2024-03-15',
+    time: '16:30',
+    venue: 'La Planchada',
+    competition: 'Segunda Regional Grupo C',
+    isHome: true,
+    result: '3-0',
+    homeScore: 3,
+    awayScore: 0,
+    status: 'finished',
+    matchday: 22,
+  },
+  {
+    id: 'fb-4',
+    opponent: 'Santoña CF',
+    date: '2024-03-29',
+    time: '18:00',
+    venue: 'Campo Santoña',
+    competition: 'Segunda Regional Grupo C',
+    isHome: false,
+    status: 'scheduled',
+    matchday: 25,
+  },
+];
 
 export const calendarService = {
   _filterFallback(options?: {
