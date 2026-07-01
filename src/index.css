@@ -56,4 +56,8 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  .animate-slide-down {
+    animation: slideDown 0.2s ease-out;
+  }
 }

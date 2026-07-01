@@ -174,50 +174,53 @@ const Tickets: React.FC = () => {
                   {match.ticketTypes.map((ticketType) => {
                     const quantity = ticketQuantities[`${match.id}-${ticketType.id}`] || 0;
                     return (
-                      <div key={ticketType.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-secondary-900 mb-1">
-                            {ticketType.name}
-                          </h4>
-                          <div className="flex items-center space-x-4 text-sm text-secondary-600">
-                            <span className="font-bold text-primary-600 text-lg">
-                              €{ticketType.price}
-                            </span>
-                            <div className="flex items-center space-x-1">
-                              <Users className="w-4 h-4" />
-                              <span>{ticketType.available} disponibles</span>
+                      <div key={ticketType.id} className="p-4 border border-gray-200 rounded-lg">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-secondary-900 mb-1">
+                              {ticketType.name}
+                            </h4>
+                            <div className="flex items-center space-x-4 text-sm text-secondary-600">
+                              <span className="font-bold text-primary-600 text-lg">
+                                €{ticketType.price}
+                              </span>
+                              <div className="flex items-center space-x-1">
+                                <Users className="w-4 h-4" />
+                                <span>{ticketType.available} disponibles</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        
-                        <div className="flex items-center space-x-4">
-                          <div className="flex items-center space-x-3">
+
+                          <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+                            <div className="flex items-center space-x-2 sm:space-x-3">
+                              <button
+                                onClick={() => handleQuantityChange(match.id, ticketType.id, -1)}
+                                disabled={quantity === 0}
+                                className="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                              >
+                                <Minus className="w-4 h-4" />
+                              </button>
+                              <span className="px-3 py-1 border border-gray-300 rounded min-w-[40px] text-center text-sm">
+                                {quantity}
+                              </span>
+                              <button
+                                onClick={() => handleQuantityChange(match.id, ticketType.id, 1)}
+                                disabled={quantity >= ticketType.available}
+                                className="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            </div>
+
                             <button
-                              onClick={() => handleQuantityChange(match.id, ticketType.id, -1)}
+                              onClick={() => handleAddToCart(match.id, ticketType.id)}
                               disabled={quantity === 0}
-                              className="p-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                              className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white px-3 sm:px-4 py-2 rounded-lg font-semibold transition-colors text-sm whitespace-nowrap"
                             >
-                              <Minus className="w-4 h-4" />
-                            </button>
-                            <span className="px-3 py-1 border border-gray-300 rounded min-w-[50px] text-center">
-                              {quantity}
-                            </span>
-                            <button
-                              onClick={() => handleQuantityChange(match.id, ticketType.id, 1)}
-                              disabled={quantity >= ticketType.available}
-                              className="p-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-                            >
-                              <Plus className="w-4 h-4" />
+                              <span className="hidden sm:inline">Añadir al carrito</span>
+                              <span className="sm:hidden">Añadir</span>
                             </button>
                           </div>
-                          
-                          <button
-                            onClick={() => handleAddToCart(match.id, ticketType.id)}
-                            disabled={quantity === 0}
-                            className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
-                          >
-                            Añadir al carrito
-                          </button>
                         </div>
                       </div>
                     );
@@ -244,18 +247,20 @@ const Tickets: React.FC = () => {
 
         {/* Cart Summary */}
         {getTicketsTotalPrice() > 0 && (
-          <div className="fixed bottom-6 right-6 bg-white rounded-lg shadow-xl p-6 border border-gray-200">
-            <div className="text-center">
-              <div className="text-sm text-secondary-600 mb-2">Total en carrito</div>
-              <div className="text-2xl font-bold text-primary-600 mb-4">
-                €{getTicketsTotalPrice().toFixed(2)}
+          <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:w-auto bg-white rounded-lg shadow-xl p-4 sm:p-6 border border-gray-200 z-30">
+            <div className="flex items-center justify-between sm:flex-col sm:text-center gap-4 sm:gap-0">
+              <div>
+                <div className="text-sm text-secondary-600 sm:mb-2">Total en carrito</div>
+                <div className="text-xl sm:text-2xl font-bold text-primary-600 sm:mb-4">
+                  €{getTicketsTotalPrice().toFixed(2)}
+                </div>
               </div>
               <Link
                 to="/entradas/checkout"
-                className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors inline-flex items-center"
+                className="bg-primary-600 hover:bg-primary-700 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold transition-colors inline-flex items-center text-sm sm:text-base"
               >
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                Proceder al pago
+                <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                Pagar
               </Link>
             </div>
           </div>

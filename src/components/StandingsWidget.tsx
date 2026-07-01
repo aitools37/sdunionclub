@@ -102,7 +102,7 @@ const StandingsWidget: React.FC<StandingsWidgetProps> = ({
             <Trophy className="w-6 h-6 text-yellow-400" />
             <div>
               <h3 className="text-lg font-bold text-white">Clasificación</h3>
-              <p className="text-primary-100 text-sm">Segunda Regional B</p>
+              <p className="text-primary-100 text-sm">Segunda Regional Grupo C</p>
             </div>
           </div>
           {ourPosition && (

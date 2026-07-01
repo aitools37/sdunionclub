@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Calendar, Users, Trophy, ArrowRight, Heart,
-  Ticket, ShoppingBag, TrendingUp, Newspaper,
+  Ticket, ShoppingBag, Newspaper,
   ChevronLeft, ChevronRight, MapPin,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -288,8 +288,8 @@ const Home: React.FC = () => {
               {/* News */}
               <div>
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="section-title text-secondary-900">
-                    <Newspaper className="w-7 h-7 text-primary-600 inline mr-3 -mt-1" />
+                  <h2 className="text-2xl sm:text-3xl font-bold text-secondary-900 flex items-center">
+                    <Newspaper className="w-6 h-6 text-primary-600 mr-3 flex-shrink-0" />
                     Noticias
                   </h2>
                   <Link to="/noticias" className="text-primary-600 hover:text-primary-700 text-sm font-semibold flex items-center">
@@ -375,8 +375,8 @@ const Home: React.FC = () => {
               {/* Upcoming Matches */}
               <div>
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="section-title text-secondary-900">
-                    <Calendar className="w-7 h-7 text-primary-600 inline mr-3 -mt-1" />
+                  <h2 className="text-2xl sm:text-3xl font-bold text-secondary-900 flex items-center">
+                    <Calendar className="w-6 h-6 text-primary-600 mr-3 flex-shrink-0" />
                     Proximos Partidos
                   </h2>
                   <Link to="/calendario" className="text-primary-600 hover:text-primary-700 text-sm font-semibold flex items-center">
@@ -437,8 +437,8 @@ const Home: React.FC = () => {
               {recentResults.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="section-title text-secondary-900">
-                      <Trophy className="w-7 h-7 text-yellow-500 inline mr-3 -mt-1" />
+                    <h2 className="text-2xl sm:text-3xl font-bold text-secondary-900 flex items-center">
+                      <Trophy className="w-6 h-6 text-yellow-500 mr-3 flex-shrink-0" />
                       Resultados
                     </h2>
                   </div>
