@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Star, Heart, ShoppingCart, Filter, Grid3X3, List } from 'lucide-react';
+import { ArrowLeft, Plus, Star, Heart, Filter, Grid3x3 as Grid3X3, List, ChevronDown } from 'lucide-react';
 import { useCartStore } from '../stores/cartStore';
 import toast from 'react-hot-toast';
 
@@ -9,6 +9,7 @@ const Merchandising: React.FC = () => {
   const [priceRange, setPriceRange] = useState([0, 50]);
   const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const { addItem } = useCartStore();
 
   const products = [
@@ -190,52 +191,60 @@ const Merchandising: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="lg:grid lg:grid-cols-4 lg:gap-8">
           {/* Filters Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-              <h3 className="text-lg font-semibold text-secondary-900 mb-4 flex items-center">
-                <Filter className="w-5 h-5 mr-2" />
-                Filtros
-              </h3>
+          <div className="lg:col-span-1 mb-6 lg:mb-0">
+            <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6 lg:sticky lg:top-24">
+              <button
+                onClick={() => setFiltersOpen(!filtersOpen)}
+                className="w-full flex items-center justify-between lg:pointer-events-none"
+              >
+                <h3 className="text-lg font-semibold text-secondary-900 flex items-center">
+                  <Filter className="w-5 h-5 mr-2" />
+                  Filtros
+                </h3>
+                <ChevronDown className={`w-5 h-5 text-secondary-500 lg:hidden transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+              </button>
 
-              {/* Categories */}
-              <div className="mb-6">
-                <h4 className="font-medium text-secondary-900 mb-3">Categorías</h4>
-                <div className="space-y-2">
-                  {categories.map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => setSelectedCategory(category.id)}
-                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                        selectedCategory === category.id
-                          ? 'bg-primary-100 text-primary-700'
-                          : 'hover:bg-gray-100 text-secondary-600'
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span>{category.name}</span>
-                        <span className="text-sm">({category.count})</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Price Range */}
-              <div className="mb-6">
-                <h4 className="font-medium text-secondary-900 mb-3">Precio</h4>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="range"
-                      min="0"
-                      max="50"
-                      value={priceRange[1]}
-                      onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
-                      className="flex-1"
-                    />
+              <div className={`mt-4 ${filtersOpen ? 'block' : 'hidden lg:block'}`}>
+                {/* Categories */}
+                <div className="mb-6">
+                  <h4 className="font-medium text-secondary-900 mb-3">Categorías</h4>
+                  <div className="space-y-2">
+                    {categories.map((category) => (
+                      <button
+                        key={category.id}
+                        onClick={() => { setSelectedCategory(category.id); setFiltersOpen(false); }}
+                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                          selectedCategory === category.id
+                            ? 'bg-primary-100 text-primary-700'
+                            : 'hover:bg-gray-100 text-secondary-600'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span>{category.name}</span>
+                          <span className="text-sm">({category.count})</span>
+                        </div>
+                      </button>
+                    ))}
                   </div>
-                  <div className="text-sm text-secondary-600">
-                    Hasta €{priceRange[1]}
+                </div>
+
+                {/* Price Range */}
+                <div className="mb-6">
+                  <h4 className="font-medium text-secondary-900 mb-3">Precio</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="range"
+                        min="0"
+                        max="50"
+                        value={priceRange[1]}
+                        onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
+                        className="flex-1"
+                      />
+                    </div>
+                    <div className="text-sm text-secondary-600">
+                      Hasta €{priceRange[1]}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -341,13 +350,13 @@ const Merchandising: React.FC = () => {
                       </div>
                     </>
                   ) : (
-                    <div className="flex p-4">
+                    <div className="flex flex-col sm:flex-row p-4">
                       <img
                         src={product.image}
                         alt={product.name}
-                        className="w-32 h-32 object-cover rounded-lg flex-shrink-0"
+                        className="w-full sm:w-32 h-48 sm:h-32 object-cover rounded-lg flex-shrink-0"
                       />
-                      <div className="ml-4 flex-1">
+                      <div className="mt-4 sm:mt-0 sm:ml-4 flex-1">
                         <div className="flex items-center mb-2">
                           <div className="flex items-center">
                             {[...Array(5)].map((_, i) => (
@@ -365,22 +374,22 @@ const Merchandising: React.FC = () => {
                             ({product.reviews})
                           </span>
                         </div>
-                        <h3 className="text-xl font-semibold text-secondary-900 mb-2">
+                        <h3 className="text-lg sm:text-xl font-semibold text-secondary-900 mb-2">
                           {product.name}
                         </h3>
-                        <p className="text-secondary-600 mb-4">
+                        <p className="text-secondary-600 mb-4 text-sm sm:text-base">
                           {product.description}
                         </p>
                         <div className="flex items-center justify-between">
-                          <span className="text-2xl font-bold text-primary-600">
+                          <span className="text-xl sm:text-2xl font-bold text-primary-600">
                             €{product.price}
                           </span>
                           <button
                             onClick={() => handleAddToCart(product)}
-                            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center"
+                            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center text-sm sm:text-base"
                           >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Añadir al carrito
+                            <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                            Añadir
                           </button>
                         </div>
                       </div>

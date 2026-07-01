@@ -64,56 +64,58 @@ const Cart: React.FC = () => {
 
               <div className="divide-y divide-gray-200">
                 {items.map((item) => (
-                  <div key={item.id} className="p-6">
-                    <div className="flex items-start space-x-4">
+                  <div key={item.id} className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                        className="w-full sm:w-20 h-40 sm:h-20 object-cover rounded-lg flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-secondary-900 mb-1">
-                          {item.name}
-                        </h3>
+                        <div className="flex items-start justify-between mb-1">
+                          <h3 className="text-base sm:text-lg font-semibold text-secondary-900">
+                            {item.name}
+                          </h3>
+                          <button
+                            onClick={() => removeItem(item.id)}
+                            className="p-2 text-secondary-400 hover:text-error-600 transition-colors flex-shrink-0 -mt-1 -mr-1"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
                         {item.size && (
                           <p className="text-sm text-secondary-600 mb-2">
                             Talla: {item.size}
                           </p>
                         )}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-between mt-3">
+                          <div className="flex items-center space-x-2 sm:space-x-3">
                             <button
                               onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="p-1 border border-gray-300 rounded hover:bg-gray-50"
+                              className="p-1.5 border border-gray-300 rounded hover:bg-gray-50"
                             >
                               <Minus className="w-4 h-4" />
                             </button>
-                            <span className="px-3 py-1 border border-gray-300 rounded min-w-[50px] text-center">
+                            <span className="px-3 py-1 border border-gray-300 rounded min-w-[40px] text-center text-sm">
                               {item.quantity}
                             </span>
                             <button
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="p-1 border border-gray-300 rounded hover:bg-gray-50"
+                              className="p-1.5 border border-gray-300 rounded hover:bg-gray-50"
                             >
                               <Plus className="w-4 h-4" />
                             </button>
                           </div>
                           <div className="text-right">
-                            <div className="text-lg font-semibold text-secondary-900">
+                            <div className="text-base sm:text-lg font-semibold text-secondary-900">
                               €{(item.price * item.quantity).toFixed(2)}
                             </div>
-                            <div className="text-sm text-secondary-500">
+                            <div className="text-xs sm:text-sm text-secondary-500">
                               €{item.price} cada uno
                             </div>
                           </div>
                         </div>
                       </div>
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="p-2 text-secondary-400 hover:text-error-600 transition-colors"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
                     </div>
                   </div>
                 ))}

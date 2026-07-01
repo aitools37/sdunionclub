@@ -141,8 +141,8 @@ const SocialFeed: React.FC<SocialFeedProps> = ({ limit = 6, layout = 'grid' }) =
       </div>
 
       {/* Grid */}
-      <div className={`grid gap-4 ${
-        layout === 'carousel' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-6' : 'grid-cols-2 md:grid-cols-3'
+      <div className={`grid gap-3 sm:gap-4 ${
+        layout === 'carousel' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3'
       }`}>
         {posts.map((post, index) => (
           <motion.a

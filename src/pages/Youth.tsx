@@ -128,18 +128,18 @@ const Youth: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 -mt-16 relative z-20 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 -mt-16 relative z-20 mb-16">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <div key={index} className="bg-white rounded-lg shadow-lg p-6 text-center">
-                <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Icon className="w-6 h-6 text-primary-600" />
+              <div key={index} className="bg-white rounded-lg shadow-lg p-3 sm:p-6 text-center">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4">
+                  <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
                 </div>
-                <div className="text-2xl font-bold text-secondary-900 mb-2">
+                <div className="text-xl sm:text-2xl font-bold text-secondary-900 mb-1 sm:mb-2">
                   {stat.value}
                 </div>
-                <div className="text-sm text-secondary-600">
+                <div className="text-xs sm:text-sm text-secondary-600">
                   {stat.label}
                 </div>
               </div>
@@ -148,8 +148,8 @@ const Youth: React.FC = () => {
         </div>
 
         {/* Philosophy */}
-        <div className="bg-white rounded-lg shadow-sm p-8 mb-12">
-          <h2 className="text-3xl font-bold text-secondary-900 mb-6">Nuestra Filosofía</h2>
+        <div className="bg-white rounded-lg shadow-sm p-5 sm:p-8 mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold text-secondary-900 mb-6">Nuestra Filosofía</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-4 text-secondary-700 leading-relaxed">
               <p>
@@ -178,9 +178,9 @@ const Youth: React.FC = () => {
         </div>
 
         {/* Categories */}
-        <div className="bg-white rounded-lg shadow-sm p-8 mb-12">
-          <h2 className="text-3xl font-bold text-secondary-900 mb-8">Nuestras Categorías</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="bg-white rounded-lg shadow-sm p-5 sm:p-8 mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold text-secondary-900 mb-8">Nuestras Categorías</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {categories.map((category, index) => (
               <div key={index} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                 <img
@@ -311,9 +311,9 @@ const Youth: React.FC = () => {
         </div>
 
         {/* Registration CTA */}
-        <div className="bg-primary-600 rounded-lg shadow-lg p-8 text-center text-white mb-12">
-          <h2 className="text-3xl font-bold mb-4">¿Quieres que tu hijo forme parte?</h2>
-          <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
+        <div className="bg-primary-600 rounded-lg shadow-lg p-5 sm:p-8 text-center text-white mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4">¿Quieres que tu hijo forme parte?</h2>
+          <p className="text-lg sm:text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
             Las inscripciones están abiertas todo el año. Ven a conocer nuestras instalaciones 
             y descubre por qué somos la mejor opción para la formación deportiva de tu hijo.
           </p>

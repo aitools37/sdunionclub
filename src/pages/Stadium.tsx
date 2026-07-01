@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Users, Ruler, Calendar, Car, Bus, Train, Camera } from 'lucide-react';
+import { MapPin, Users, Ruler, Calendar, Car, Bus, Brain as Train, Camera } from 'lucide-react';
 
 const Stadium: React.FC = () => {
   const stadiumImages = [
@@ -76,18 +76,18 @@ const Stadium: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Stadium Info Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 -mt-16 relative z-20 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 -mt-16 relative z-20 mb-16">
           {facilities.map((facility, index) => {
             const Icon = facility.icon;
             return (
-              <div key={index} className="bg-white rounded-lg shadow-lg p-6 text-center">
-                <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Icon className="w-6 h-6 text-primary-600" />
+              <div key={index} className="bg-white rounded-lg shadow-lg p-3 sm:p-6 text-center">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4">
+                  <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
                 </div>
-                <div className="text-2xl font-bold text-secondary-900 mb-2">
+                <div className="text-base sm:text-2xl font-bold text-secondary-900 mb-1 sm:mb-2">
                   {facility.value}
                 </div>
-                <div className="text-sm text-secondary-600">
+                <div className="text-xs sm:text-sm text-secondary-600">
                   {facility.name}
                 </div>
               </div>
@@ -96,8 +96,8 @@ const Stadium: React.FC = () => {
         </div>
 
         {/* Stadium Description */}
-        <div className="bg-white rounded-lg shadow-sm p-8 mb-12">
-          <h2 className="text-3xl font-bold text-secondary-900 mb-6">Historia del Estadio</h2>
+        <div className="bg-white rounded-lg shadow-sm p-5 sm:p-8 mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold text-secondary-900 mb-6">Historia del Estadio</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-4 text-secondary-700 leading-relaxed">
               <p>

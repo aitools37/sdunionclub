@@ -18,15 +18,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {showBanner && (
         <div className="bg-amber-500 text-white relative z-30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
-            <div className="flex items-center space-x-3 flex-1 justify-center">
+            <div className="flex items-center space-x-2 sm:space-x-3 flex-1 justify-center min-w-0">
               <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-              <p className="text-sm font-medium">
-                Web en desarrollo - Los servicios de compra y registro no estan disponibles.
+              <p className="text-xs sm:text-sm font-medium truncate sm:whitespace-normal">
+                <span className="sm:hidden">Web en desarrollo</span>
+                <span className="hidden sm:inline">Web en desarrollo - Los servicios de compra y registro no estan disponibles.</span>
               </p>
             </div>
             <button
               onClick={() => setShowBanner(false)}
-              className="ml-4 p-1 hover:bg-amber-600 rounded transition-colors flex-shrink-0"
+              className="ml-3 p-1.5 hover:bg-amber-600 rounded transition-colors flex-shrink-0"
             >
               <X className="w-4 h-4" />
             </button>

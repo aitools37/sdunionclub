@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Calendar, Camera, Trophy, Users, Eye, MessageSquare, Share2, Filter, Grid3X3, List } from 'lucide-react';
+import { Calendar, Camera, Trophy, Users, Eye, MessageSquare, Share2, Filter, Grid3x3 as Grid3X3, List, ChevronDown } from 'lucide-react';
 
 const News: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('todas');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const categories = [
     { id: 'todas', name: 'Todas', count: 12 },
@@ -177,21 +178,19 @@ const News: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold text-secondary-900 mb-3 line-clamp-2">
+                    <div className="p-4 sm:p-6">
+                      <h3 className="text-lg sm:text-xl font-bold text-secondary-900 mb-3 line-clamp-2">
                         {item.title}
                       </h3>
-                      <p className="text-secondary-600 mb-4 line-clamp-3">
+                      <p className="text-secondary-600 mb-4 line-clamp-3 text-sm sm:text-base">
                         {item.summary}
                       </p>
-                      <div className="flex items-center justify-between text-sm text-secondary-500 mb-4">
-                        <div className="flex items-center space-x-4">
-                          <div className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-1" />
-                            {new Date(item.date).toLocaleDateString('es-ES')}
-                          </div>
-                          <div>{item.author}</div>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm text-secondary-500 mb-4">
+                        <div className="flex items-center">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          {new Date(item.date).toLocaleDateString('es-ES')}
                         </div>
+                        <div>{item.author}</div>
                         <div className="flex items-center space-x-3">
                           <div className="flex items-center">
                             <Eye className="w-4 h-4 mr-1" />
@@ -203,7 +202,10 @@ const News: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <button className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                      <button
+                        onClick={() => window.open('https://instagram.com/unionclubastillero', '_blank')}
+                        className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base"
+                      >
                         Leer más
                       </button>
                     </div>
@@ -216,20 +218,26 @@ const News: React.FC = () => {
 
         <div className="lg:grid lg:grid-cols-4 lg:gap-8">
           {/* Filters Sidebar */}
-          <div className="lg:col-span-1 mb-8 lg:mb-0">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-              <h3 className="text-lg font-semibold text-secondary-900 mb-4 flex items-center">
-                <Filter className="w-5 h-5 mr-2" />
-                Categorías
-              </h3>
+          <div className="lg:col-span-1 mb-6 lg:mb-0">
+            <div className="bg-white rounded-lg shadow-sm p-4 lg:p-6 lg:sticky lg:top-24">
+              <button
+                onClick={() => setFiltersOpen(!filtersOpen)}
+                className="w-full flex items-center justify-between lg:pointer-events-none"
+              >
+                <h3 className="text-lg font-semibold text-secondary-900 flex items-center">
+                  <Filter className="w-5 h-5 mr-2" />
+                  Categorías
+                </h3>
+                <ChevronDown className={`w-5 h-5 text-secondary-500 lg:hidden transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+              </button>
 
-              <div className="space-y-2">
+              <div className={`space-y-2 mt-4 ${filtersOpen ? 'block' : 'hidden lg:block'}`}>
                 {categories.map((category) => {
                   const CategoryIcon = getCategoryIcon(category.id);
                   return (
                     <button
                       key={category.id}
-                      onClick={() => setSelectedCategory(category.id)}
+                      onClick={() => { setSelectedCategory(category.id); setFiltersOpen(false); }}
                       className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center justify-between ${
                         selectedCategory === category.id
                           ? 'bg-primary-100 text-primary-700'
@@ -389,7 +397,10 @@ const News: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <button className="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                      <button
+                        onClick={() => window.open('https://instagram.com/unionclubastillero', '_blank')}
+                        className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                      >
                         Leer más →
                       </button>
                     </div>

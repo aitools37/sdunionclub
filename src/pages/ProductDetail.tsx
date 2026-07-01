@@ -103,15 +103,15 @@ const ProductDetail: React.FC = () => {
               <img
                 src={product.images[selectedImage]}
                 alt={product.name}
-                className="w-full h-96 lg:h-[500px] object-cover rounded-lg"
+                className="w-full h-64 sm:h-80 lg:h-[500px] object-cover rounded-lg"
               />
             </div>
-            <div className="flex space-x-4">
+            <div className="flex space-x-3 sm:space-x-4 overflow-x-auto pb-2">
               {product.images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
-                  className={`w-20 h-20 border-2 rounded-lg overflow-hidden ${
+                  className={`w-16 h-16 sm:w-20 sm:h-20 border-2 rounded-lg overflow-hidden flex-shrink-0 ${
                     selectedImage === index ? 'border-primary-600' : 'border-gray-200'
                   }`}
                 >
@@ -141,10 +141,10 @@ const ProductDetail: React.FC = () => {
                   ({product.reviews} reseñas)
                 </span>
               </div>
-              <h1 className="text-3xl font-bold text-secondary-900 mb-4">
+              <h1 className="text-2xl sm:text-3xl font-bold text-secondary-900 mb-4">
                 {product.name}
               </h1>
-              <div className="text-3xl font-bold text-primary-600 mb-4">
+              <div className="text-2xl sm:text-3xl font-bold text-primary-600 mb-4">
                 €{product.price}
               </div>
               <p className="text-secondary-600 leading-relaxed">
